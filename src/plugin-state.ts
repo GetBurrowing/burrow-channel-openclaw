@@ -7,6 +7,7 @@ import { TaskWorkerController } from "./task-worker-controller.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const clients = new Map<string, SuiteClient>();
 const spaceToAccountId = new Map<string, string>();
+const spaceToTaskId = new Map<string, string>();
 
 let taskWorkers: TaskWorkerController | null = null;
 
@@ -69,6 +70,7 @@ export function clearClient(accountId: string) {
   for (const [spaceId, mappedAccountId] of spaceToAccountId.entries()) {
     if (mappedAccountId === accountId) {
       spaceToAccountId.delete(spaceId);
+      spaceToTaskId.delete(spaceId);
     }
   }
 
@@ -80,6 +82,15 @@ export function clearClient(accountId: string) {
 
 export function rememberSpaceAccount(spaceId: string, accountId: string) {
   spaceToAccountId.set(spaceId, accountId);
+}
+
+export function setSpaceTaskId(spaceId: string, taskId: string) {
+  spaceToTaskId.set(spaceId, taskId);
+}
+
+export function getSpaceTaskId(spaceId?: string | null): string | undefined {
+  if (!spaceId) return undefined;
+  return spaceToTaskId.get(spaceId);
 }
 
 export function clientForSpace(spaceId?: string | null): SuiteClient | null {

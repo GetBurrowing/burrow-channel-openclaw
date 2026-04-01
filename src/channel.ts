@@ -570,7 +570,7 @@ export const suitePlugin: ChannelPlugin = {
       const client = new SuiteClient(suiteConfig, {
         async onAttention(payload) {
           try {
-            const spaceId = payload.signal?.space_id || payload.signal?.task_id;
+            const spaceId = payload.signal?.space_id || payload.context?.execution_space_id || payload.signal?.task_id;
             if (spaceId) rememberSpaceAccount(spaceId, accountId);
 
             await handleSuiteInbound({

@@ -1,7 +1,7 @@
 import { type OpenClawConfig, type RuntimeEnv } from "./runtime-api.js";
 import { getSuiteRuntime } from "./runtime.js";
 import { formatContextPreamble } from "./message-bridge.js";
-import { getTaskWorkers, rememberSpaceAccount } from "./plugin-state.js";
+import { getTaskWorkers, rememberSpaceAccount, setSpaceTaskId } from "./plugin-state.js";
 import { buildTaskSessionKey, type TaskPhase } from "./session-key.js";
 import type { AttentionPayload } from "./suite-client.js";
 import type { SuiteClient } from "./suite-client.js";
@@ -39,8 +39,16 @@ export async function handleSuiteInbound(params: {
   // For orchestrated signals, the signal.space_id is the execution space which
   // isn't in the agent's routing config. Use the execution space for replies but
   // route via a synthetic peer so the default agent binding resolves correctly.
-  const spaceId = payload.signal.space_id || payload.signal.task_id || "unknown";
+  const spaceId =
+    payload.signal.space_id ||
+    payload.context?.execution_space_id ||
+    payload.signal.task_id ||
+    "unknown";
   rememberSpaceAccount(spaceId, accountId);
+
+  if (isLifecycleSignal && taskId && spaceId !== "unknown") {
+    setSpaceTaskId(spaceId, taskId);
+  }
   const senderId = payload.message.author || (isLifecycleSignal ? "TaskRouter" : "unknown");
   const senderName = payload.message.author || (isLifecycleSignal ? "TaskRouter" : "unknown");
   const isGroup = true;
