@@ -1,6 +1,6 @@
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import { suitePlugin } from "./src/channel.js";
-import { clientForSpace, getTaskWorkers } from "./src/plugin-state.js";
+import { clientForSpace, getSpaceTaskId, getTaskWorkers } from "./src/plugin-state.js";
 import { setSuiteRuntime } from "./src/runtime.js";
 import { parseTaskSessionKey } from "./src/session-key.js";
 
@@ -26,6 +26,10 @@ function resolveSpaceId(sessionKey?: string | null): string | undefined {
 
   const parts = (sessionKey || "").split(":");
   return parts.length >= 5 ? parts[4] : parts.length >= 4 ? parts[3] : undefined;
+}
+
+function resolveTaskId(spaceId?: string | null, sessionKey?: string | null): string | undefined {
+  return getSpaceTaskId(spaceId) || parseTaskSessionKey(sessionKey)?.taskId;
 }
 
 function taskPhaseGuidance(taskSession: ReturnType<typeof parseTaskSessionKey>): string | null {
@@ -183,6 +187,7 @@ export default defineChannelPluginEntry({
 
       const taskSession = parseTaskSessionKey(ctx.sessionKey);
       const spaceId = resolveSpaceId(ctx.sessionKey);
+      const taskId = resolveTaskId(spaceId, ctx.sessionKey);
       const client = clientForSpace(spaceId);
       if (!client) return;
 
@@ -202,6 +207,7 @@ export default defineChannelPluginEntry({
 
       client.sendUsageEvent({
         space_id: spaceId,
+        task_id: taskId,
         session_key: ctx.sessionKey,
         model: event.model,
         provider: event.provider,
