@@ -646,6 +646,22 @@ export const suitePlugin: ChannelPlugin = {
       }),
       execute: suiteToolExecute("skill.upsert"),
     },
+    {
+      name: "suite_epic_create",
+      label: "Create Suite Epic",
+      description:
+        "Create a new epic in a Startup Suite project. Epics organize related tasks. Use when scoping a new initiative or workstream.",
+      parameters: Type.Object({
+        project_id: Type.String({ description: "UUID of the Suite project to create the epic in." }),
+        name: Type.String({ description: "Human-readable epic name / title." }),
+        description: Type.Optional(Type.String({ description: "Longer description of the epic's intent and scope." })),
+        acceptance_criteria: Type.Optional(Type.String({ description: "Acceptance criteria that define when the epic is considered done." })),
+        status: Type.Optional(Type.String({ description: "Initial status (e.g. backlog, planning, in_progress)." })),
+        target_branch: Type.Optional(Type.String({ description: "Git branch the epic's work targets." })),
+        deploy_target: Type.Optional(Type.String({ description: "Deployment environment / target the epic delivers to." })),
+      }),
+      execute: suiteToolExecute("epic.create"),
+    },
     // Unprefixed aliases — let dispatch prompts referring to canonical tool
     // names (e.g. `skill_list`) resolve without the `suite_` prefix.
     {
@@ -680,6 +696,22 @@ export const suitePlugin: ChannelPlugin = {
         content: Type.String({ description: "Full markdown body of the skill playbook." }),
       }),
       execute: suiteToolExecute("skill.upsert"),
+    },
+    {
+      name: "epic_create",
+      label: "Create Epic",
+      description:
+        "Alias for suite_epic_create. Use when prompts refer to epic_create directly.",
+      parameters: Type.Object({
+        project_id: Type.String({ description: "UUID of the Suite project to create the epic in." }),
+        name: Type.String({ description: "Human-readable epic name / title." }),
+        description: Type.Optional(Type.String({ description: "Longer description of the epic's intent and scope." })),
+        acceptance_criteria: Type.Optional(Type.String({ description: "Acceptance criteria that define when the epic is considered done." })),
+        status: Type.Optional(Type.String({ description: "Initial status (e.g. backlog, planning, in_progress)." })),
+        target_branch: Type.Optional(Type.String({ description: "Git branch the epic's work targets." })),
+        deploy_target: Type.Optional(Type.String({ description: "Deployment environment / target the epic delivers to." })),
+      }),
+      execute: suiteToolExecute("epic.create"),
     },
     ];
   },

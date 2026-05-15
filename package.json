@@ -1,6 +1,6 @@
 {
   "name": "startup-suite-channel-plugin",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/Startup-Suite/openclaw-suite-channel.git"
@@ -11,7 +11,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test:tool-contract": "node scripts/check-tool-contract.mjs",
-    "test:client-info-handshake": "node scripts/check-client-info-handshake.mjs"
+    "test:client-info-handshake": "node scripts/check-client-info-handshake.mjs",
+    "test:epic-create-tool": "node scripts/check-epic-create-tool.mjs",
+    "test": "npm run test:tool-contract && npm run test:client-info-handshake && npm run test:epic-create-tool"
   },
   "openclaw": {
     "extensions": [

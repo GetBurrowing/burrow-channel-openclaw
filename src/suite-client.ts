@@ -337,6 +337,12 @@ export class SuiteClient {
         "skill.list",
         "skill.get",
         "skill.upsert",
+        // Epic registry — Suite advertises `epic.create` over the wire; the
+        // plugin exposes both `suite_epic_create` and the unprefixed
+        // `epic_create` alias for legacy WS-channel agents (task 019d60ca).
+        "suite_epic_create",
+        "epic_create",
+        "epic.create",
       ];
       const available = (payload.tools || []).map((t: any) => t.name);
       const unregistered = available.filter(
