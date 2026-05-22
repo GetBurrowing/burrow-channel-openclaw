@@ -322,6 +322,27 @@ export class SuiteClient {
         "suite_org_context_list",
         "suite_org_memory_append",
         "suite_org_memory_search",
+        // Skill registry — Suite advertises dotted names (`skill.list`, etc.)
+        // but the plugin exposes underscored aliases (suite_skill_*, skill_*)
+        // because OpenClaw tool callers prefer underscores. Include both forms
+        // here so (a) the tool-contract check matches plugin agentTools names
+        // and (b) the available-vs-registered diff against Suite's manifest
+        // does not warn on the dotted advertisement.
+        "suite_skill_list",
+        "skill_list",
+        "suite_skill_get",
+        "skill_get",
+        "suite_skill_upsert",
+        "skill_upsert",
+        "skill.list",
+        "skill.get",
+        "skill.upsert",
+        // Epic registry — Suite advertises `epic.create` over the wire; the
+        // plugin exposes both `suite_epic_create` and the unprefixed
+        // `epic_create` alias for legacy WS-channel agents (task 019d60ca).
+        "suite_epic_create",
+        "epic_create",
+        "epic.create",
       ];
       const available = (payload.tools || []).map((t: any) => t.name);
       const unregistered = available.filter(
