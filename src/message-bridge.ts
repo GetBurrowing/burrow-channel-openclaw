@@ -8,7 +8,10 @@ import type { AttentionPayload } from "./suite-client.js";
  * - Chat attention (ContextPlane): space, canvases, tasks, agents, activity_summary
  * - Task orchestration (ContextAssembler): project, epic, task, plan, skills
  */
-export function formatContextPreamble(context: AttentionPayload["context"]): string {
+export function formatContextPreamble(
+  context: AttentionPayload["context"],
+  opts: { useMcpTools?: boolean } = {}
+): string {
   const lines: string[] = [];
 
   // ── Space context (chat attention) ──────────────────────────────────
@@ -20,7 +23,11 @@ export function formatContextPreamble(context: AttentionPayload["context"]): str
     lines.push("");
     lines.push(`[Suite Context]`);
     lines.push(`Space ID: ${context.space.id}`);
-    lines.push(`(use this space_id when calling suite_canvas_create, suite_canvas_update, suite_send_media, suite_task_create, suite_task_get, suite_task_list, suite_task_update, suite_task_complete, suite_plan_create, suite_plan_get, suite_plan_submit, suite_stage_start, suite_stage_list, suite_validation_evaluate, suite_validation_list, stage_complete, report_blocker, or suite_review_request_create)`);
+    if (opts.useMcpTools) {
+      lines.push(`(pass this space_id when a Suite MCP tool requests it)`);
+    } else {
+      lines.push(`(use this space_id when calling suite_canvas_create, suite_canvas_update, suite_send_media, suite_task_create, suite_task_get, suite_task_list, suite_task_update, suite_task_complete, suite_plan_create, suite_plan_get, suite_plan_submit, suite_stage_start, suite_stage_list, suite_validation_evaluate, suite_validation_list, stage_complete, report_blocker, or suite_review_request_create)`);
+    }
     lines.push("");
   }
 
