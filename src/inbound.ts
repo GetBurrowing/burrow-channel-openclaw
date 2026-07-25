@@ -102,15 +102,27 @@ export async function handleSuiteInbound(params: {
   // Guard against double-appending: when the resolved peer already is the space
   // the key ends in that id, and appending again minted a second parallel
   // session for the same room (both forms are present in the live store).
+  //
+  // NOTE: never assign back onto `route`. OpenClaw memoizes resolved routes per
+  // config, so mutating the returned object persists the override into the cache
+  // and the *next* signal inherits it — which is how a chat message ended up
+  // routed into `…:dispatch:system_event:<ts>:<spaceId>`. All session-key
+  // derivation below works on locals and `route` is left untouched.
+  let conversationSessionKey = route.sessionKey;
+
   if (
     !isOrchestrated &&
     signalAgentPeer &&
     spaceId &&
     spaceId !== "unknown" &&
-    !route.sessionKey.endsWith(`:${spaceId}`)
+    !conversationSessionKey.endsWith(`:${spaceId}`)
   ) {
-    route.sessionKey = `${route.sessionKey}:${spaceId}`;
+    conversationSessionKey = `${conversationSessionKey}:${spaceId}`;
   }
+
+  // The key this turn actually runs under. Diverges from
+  // `conversationSessionKey` for task and dispatch signals.
+  let sessionKey = conversationSessionKey;
 
   runtime.log(
     `[suite-inbound] reason=${signalReason || "chat"} task=${taskId || "none"} ` +
@@ -134,31 +146,30 @@ export async function handleSuiteInbound(params: {
   // the session key so retries get a clean agent context instead of reusing poisoned state.
   if (phase && taskId) {
     const workers = getTaskWorkers();
-    const base = route.sessionKey;
-    const sessionKey =
+    const requestedKey =
       phase === "review"
-        ? buildTaskSessionKey(base, taskId, phase, Date.now())
-        : buildTaskSessionKey(base, taskId, phase);
+        ? buildTaskSessionKey(conversationSessionKey, taskId, phase, Date.now())
+        : buildTaskSessionKey(conversationSessionKey, taskId, phase);
 
     let worker = workers.ensureWorker({
       taskId,
       phase,
       executionSpaceId: spaceId,
-      sessionKey,
+      sessionKey: requestedKey,
     });
 
     if (phase === "review" && signalReason === "task_assigned") {
-      worker = workers.forceFreshSession(taskId, phase, sessionKey) ?? worker;
+      worker = workers.forceFreshSession(taskId, phase, requestedKey) ?? worker;
     }
 
-    route.sessionKey = worker.sessionKey;
+    sessionKey = worker.sessionKey;
     runtime.log(
-      `[suite-inbound] task-route override: task=${taskId} phase=${phase} requested=${sessionKey} worker=${worker.sessionKey}`
+      `[suite-inbound] task-route override: task=${taskId} phase=${phase} requested=${requestedKey} worker=${worker.sessionKey}`
     );
 
     if (signalReason === "task_heartbeat") {
       workers.noteHeartbeat(taskId, phase, "heartbeat acknowledged", {
-        sessionKey: route.sessionKey,
+        sessionKey,
       });
     }
   } else if (isDispatch) {
@@ -175,15 +186,15 @@ export async function handleSuiteInbound(params: {
       payload.signal?.message_id ??
       `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    route.sessionKey = buildDispatchSessionKey(
-      route.sessionKey,
+    sessionKey = buildDispatchSessionKey(
+      conversationSessionKey,
       signalReason ?? "dispatch",
       discriminator
     );
 
     runtime.log(
       `[suite-inbound] dispatch-route override: reason=${signalReason} space=${spaceId} ` +
-      `session=${route.sessionKey} keyed_by=${payload.signal?.message_id ? "message_id" : "arrival"}`
+      `session=${sessionKey} keyed_by=${payload.signal?.message_id ? "message_id" : "arrival"}`
     );
   }
 
@@ -191,11 +202,11 @@ export async function handleSuiteInbound(params: {
   // `before_prompt_build` hook looks these up by the *final* session key, so
   // registering earlier filed the context under the pre-override key and the
   // preamble silently went missing on task and dispatch runs.
-  setSessionContext(route.sessionKey, payload.context);
-  setSessionOptions(route.sessionKey, resolveAccountOptions(config, accountId));
+  setSessionContext(sessionKey, payload.context);
+  setSessionOptions(sessionKey, resolveAccountOptions(config, accountId));
 
   runtime.log(
-    `[suite-inbound] resolved route: agent=${route.agentId} session=${route.sessionKey}`
+    `[suite-inbound] resolved route: agent=${route.agentId} session=${sessionKey}`
   );
 
   // Build envelope
@@ -206,7 +217,7 @@ export async function handleSuiteInbound(params: {
   const envelopeOptions = core.channel.reply.resolveEnvelopeFormatOptions(config);
   const previousTimestamp = core.channel.session.readSessionUpdatedAt({
     storePath,
-    sessionKey: route.sessionKey,
+    sessionKey,
   });
   const body = core.channel.reply.formatAgentEnvelope({
     channel: "Startup Suite",
@@ -225,7 +236,7 @@ export async function handleSuiteInbound(params: {
     CommandBody: rawBody,
     From: `startup-suite:${senderId}`,
     To: `startup-suite:${spaceId}`,
-    SessionKey: route.sessionKey,
+    SessionKey: sessionKey,
     AccountId: route.accountId,
     ChatType: isGroup ? "group" : "direct",
     ConversationLabel: fromLabel,
@@ -274,11 +285,14 @@ export async function handleSuiteInbound(params: {
   try {
     await core.channel.session.recordInboundSession({
       storePath,
-      sessionKey: route.sessionKey,
+      sessionKey,
       ctx: ctxPayload,
       createIfMissing: true,
+      // Last-route always points at the conversational key, never at a
+      // one-shot dispatch or task key. Delivery routing for the space has to
+      // keep resolving to the room's own session after a dispatch runs.
       updateLastRoute: {
-        sessionKey: route.sessionKey,
+        sessionKey: conversationSessionKey,
         channel: CHANNEL_ID,
         to: `startup-suite:${spaceId}`,
         accountId,
