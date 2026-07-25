@@ -1,11 +1,29 @@
 import { type OpenClawConfig, type RuntimeEnv } from "./runtime-api.js";
 import { getSuiteRuntime } from "./runtime.js";
 import { getTaskWorkers, resolveAccountOptions, setSessionContext, setSessionOptions } from "./plugin-state.js";
-import { buildTaskSessionKey, type TaskPhase } from "./session-key.js";
+import { buildDispatchSessionKey, buildTaskSessionKey, type TaskPhase } from "./session-key.js";
 import type { AttentionPayload } from "./suite-client.js";
 import type { SuiteClient } from "./suite-client.js";
 
 const CHANNEL_ID = "startup-suite";
+
+// Reasons that represent an ongoing human conversation — these share one
+// session per space so the agent keeps its thread. Mirrors `@routable_reasons`
+// in Suite's `Platform.Chat.AgentResponder`. Every other reason that reaches a
+// runtime (`task_assigned`, `system_event`, `meeting_scribe_completion`,
+// `meeting_triage_dispatch`) is an automated unit of work and runs isolated.
+//
+// Caveat: a responsibility with `trigger_kind: :chat_pattern` is emitted as
+// `:mention`, indistinguishable from a human @mention until Suite forwards the
+// responsibility metadata it currently drops in `build_external_signal/3`.
+const CONVERSATIONAL_REASONS = new Set([
+  "mention",
+  "directed",
+  "multi_mention",
+  "active_agent",
+  "watch",
+  "sticky",
+]);
 
 export async function handleSuiteInbound(params: {
   payload: AttentionPayload;
@@ -17,15 +35,6 @@ export async function handleSuiteInbound(params: {
   const { payload, config, runtime, client, accountId } = params;
   const core = getSuiteRuntime();
 
-  const rawBody = payload.message?.content?.trim() ?? "";
-  if (!rawBody) {
-    runtime.log(`[suite-inbound] empty message body, signal=${payload.signal?.reason} task=${payload.signal?.task_id}`);
-    return;
-  }
-
-  // Classify the signal. Any attention payload carrying a task_id is treated as
-  // task-scoped orchestration, including human steering messages posted into an
-  // execution space.
   const taskId = payload.signal?.task_id;
   const taskStatus = payload.signal?.task_status;
   const signalReason = payload.signal?.reason;
@@ -33,7 +42,25 @@ export async function handleSuiteInbound(params: {
     signalReason &&
     (signalReason === "task_assigned" || signalReason === "task_heartbeat")
   );
+
+  // Classify by reason, not by the presence of task_id. Only the TaskRouter
+  // sets task_id, so a task_id test files responsibility firings, historian /
+  // dreaming digests and meeting scribe/triage dispatches under "chat" — where
+  // they append to the space's permanent session until it can no longer be
+  // compacted. Conversation shares a session; every dispatch gets its own.
+  const isConversational = CONVERSATIONAL_REASONS.has(signalReason ?? "");
+  const isDispatch = !isConversational;
   const isOrchestrated = !!taskId;
+
+  // Meeting scribe/triage payloads carry no `message` key at all, so bailing on
+  // an empty body meant those dispatches never reached the agent.
+  const incomingBody = payload.message?.content?.trim() ?? "";
+  const rawBody =
+    incomingBody || (isDispatch ? `System dispatch: ${signalReason ?? "unknown"}` : "");
+  if (!rawBody) {
+    runtime.log(`[suite-inbound] empty message body, signal=${payload.signal?.reason} task=${payload.signal?.task_id}`);
+    return;
+  }
 
   // For orchestrated signals, the signal.space_id is the execution space which
   // isn't in the agent's routing config. Use the execution space for replies but
@@ -72,7 +99,16 @@ export async function handleSuiteInbound(params: {
   // space history isolated while preserving the agent-selection routing.
   // For task-orchestrated signals the sessionKey is already task-scoped
   // below (buildTaskSessionKey), so skip here; task sessions re-isolate.
-  if (!isOrchestrated && signalAgentPeer && spaceId && spaceId !== "unknown") {
+  // Guard against double-appending: when the resolved peer already is the space
+  // the key ends in that id, and appending again minted a second parallel
+  // session for the same room (both forms are present in the live store).
+  if (
+    !isOrchestrated &&
+    signalAgentPeer &&
+    spaceId &&
+    spaceId !== "unknown" &&
+    !route.sessionKey.endsWith(`:${spaceId}`)
+  ) {
     route.sessionKey = `${route.sessionKey}:${spaceId}`;
   }
 
@@ -80,9 +116,6 @@ export async function handleSuiteInbound(params: {
     `[suite-inbound] reason=${signalReason || "chat"} task=${taskId || "none"} ` +
     `space=${spaceId} orchestrated=${isOrchestrated}`
   );
-
-  setSessionContext(route.sessionKey, payload.context);
-  setSessionOptions(route.sessionKey, resolveAccountOptions(config, accountId));
 
   // Simple enriched body - context is now injected via OpenClaw hooks
   const enrichedBody = `**${senderName}**: ${rawBody}`;
@@ -101,10 +134,11 @@ export async function handleSuiteInbound(params: {
   // the session key so retries get a clean agent context instead of reusing poisoned state.
   if (phase && taskId) {
     const workers = getTaskWorkers();
+    const base = route.sessionKey;
     const sessionKey =
       phase === "review"
-        ? buildTaskSessionKey(taskId, phase, Date.now())
-        : buildTaskSessionKey(taskId, phase);
+        ? buildTaskSessionKey(base, taskId, phase, Date.now())
+        : buildTaskSessionKey(base, taskId, phase);
 
     let worker = workers.ensureWorker({
       taskId,
@@ -127,7 +161,38 @@ export async function handleSuiteInbound(params: {
         sessionKey: route.sessionKey,
       });
     }
+  } else if (isDispatch) {
+    // Non-task dispatches are one-shot: responsibilities, historian and
+    // dreaming digests, meeting scribe/triage. Each firing gets a key that has
+    // never been used, which is the only way to get a genuinely empty context —
+    // OpenClaw's `/new` reset replays the last ~6 turns across the boundary, so
+    // resetting a shared key would still carry the previous run's tail.
+    //
+    // Prefer message_id so a reconnect redelivery lands in the same session
+    // rather than spawning a duplicate run. Suite does not forward message_id
+    // on the chat path today, so most dispatches fall back to arrival time.
+    const discriminator =
+      payload.signal?.message_id ??
+      `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    route.sessionKey = buildDispatchSessionKey(
+      route.sessionKey,
+      signalReason ?? "dispatch",
+      discriminator
+    );
+
+    runtime.log(
+      `[suite-inbound] dispatch-route override: reason=${signalReason} space=${spaceId} ` +
+      `session=${route.sessionKey} keyed_by=${payload.signal?.message_id ? "message_id" : "arrival"}`
+    );
   }
+
+  // Registered only after every session-key override above: the
+  // `before_prompt_build` hook looks these up by the *final* session key, so
+  // registering earlier filed the context under the pre-override key and the
+  // preamble silently went missing on task and dispatch runs.
+  setSessionContext(route.sessionKey, payload.context);
+  setSessionOptions(route.sessionKey, resolveAccountOptions(config, accountId));
 
   runtime.log(
     `[suite-inbound] resolved route: agent=${route.agentId} session=${route.sessionKey}`
