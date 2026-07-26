@@ -3,6 +3,7 @@ import { suitePlugin } from "./src/channel.js";
 import { clientForSpace, clearSessionContext, getSessionContext, getSessionOptions, getTaskWorkers } from "./src/plugin-state.js";
 import { setSuiteRuntime } from "./src/runtime.js";
 import { parseTaskSessionKey } from "./src/session-key.js";
+import { resolveSpaceId } from "./src/space-resolution.js";
 import { formatContextPreamble } from "./src/message-bridge.js";
 import type { AttentionPayload } from "./src/suite-client.js";
 
@@ -18,16 +19,6 @@ function estimateCost(model: string, inputTokens: number, outputTokens: number):
   const pricing = MODEL_PRICING[key];
   if (!pricing) return 0;
   return (inputTokens / 1_000_000) * pricing.input + (outputTokens / 1_000_000) * pricing.output;
-}
-
-function resolveSpaceId(sessionKey?: string | null): string | undefined {
-  const taskSession = parseTaskSessionKey(sessionKey);
-  if (taskSession) {
-    return getTaskWorkers().resolveExecutionSpaceId(sessionKey);
-  }
-
-  const parts = (sessionKey || "").split(":");
-  return parts.length >= 5 ? parts[4] : parts.length >= 4 ? parts[3] : undefined;
 }
 
 function taskPhaseGuidance(
@@ -232,8 +223,20 @@ export default defineChannelPluginEntry({
       const outputTokens = usage.output || 0;
       const costUsd = estimateCost(event.model || "", inputTokens, outputTokens);
 
+      // Omit space_id rather than guessing. Suite stores it as :binary_id, so a
+      // non-UUID raises Ecto.ChangeError and kills the runtime channel process,
+      // and a wrong-but-valid UUID misattributes usage silently. Warn loudly so
+      // the next session-key format change surfaces here instead of as a
+      // server-side crash days later.
+      if (!spaceId) {
+        console.warn(
+          `[suite-usage] unresolved space for session=${ctx.sessionKey ?? "<none>"}; ` +
+          `emitting usage event without space_id`
+        );
+      }
+
       client.sendUsageEvent({
-        space_id: spaceId,
+        ...(spaceId ? { space_id: spaceId } : {}),
         session_key: ctx.sessionKey,
         model: event.model,
         provider: event.provider,

@@ -1,7 +1,8 @@
 import { type OpenClawConfig, type RuntimeEnv } from "./runtime-api.js";
 import { getSuiteRuntime } from "./runtime.js";
-import { getTaskWorkers, resolveAccountOptions, setSessionContext, setSessionOptions } from "./plugin-state.js";
+import { getTaskWorkers, rememberSessionSpace, resolveAccountOptions, setSessionContext, setSessionOptions } from "./plugin-state.js";
 import { buildDispatchSessionKey, buildTaskSessionKey, type TaskPhase } from "./session-key.js";
+import { isSpaceUuid } from "./space-resolution.js";
 import type { AttentionPayload } from "./suite-client.js";
 import type { SuiteClient } from "./suite-client.js";
 
@@ -204,6 +205,26 @@ export async function handleSuiteInbound(params: {
   // preamble silently went missing on task and dispatch runs.
   setSessionContext(sessionKey, payload.context);
   setSessionOptions(sessionKey, resolveAccountOptions(config, accountId));
+
+  // Bind the session to its space explicitly. The space id is NOT recoverable
+  // from the session key — the route peer is the Suite agent slug — so usage
+  // events and anything else that needs the space read it back from this map.
+  // Only a genuine `signal.space_id` counts: `spaceId` above falls back to the
+  // task id, which is a UUID and would insert cleanly under the wrong space.
+  const signalSpaceId = payload.signal?.space_id;
+  if (isSpaceUuid(signalSpaceId)) {
+    rememberSessionSpace(sessionKey, signalSpaceId);
+    // The room's own session outlives one-shot dispatch/task keys and stays the
+    // last-route target, so bind it too.
+    if (conversationSessionKey !== sessionKey) {
+      rememberSessionSpace(conversationSessionKey, signalSpaceId);
+    }
+  } else {
+    runtime.log(
+      `[suite-inbound] no usable space_id on signal (got ${JSON.stringify(signalSpaceId)}); ` +
+      `usage events for session=${sessionKey} will omit space_id`
+    );
+  }
 
   runtime.log(
     `[suite-inbound] resolved route: agent=${route.agentId} session=${sessionKey}`

@@ -7,6 +7,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const clients = new Map<string, SuiteClient>();
 const spaceToAccountId = new Map<string, string>();
 const sessionContexts = new Map<string, unknown>();
+// sessionKey -> space UUID. Session keys extend OpenClaw's resolved route key
+// (`agent:<agentId>:startup-suite:group:<peer>`), and since the peer is the
+// Suite agent slug the space id is not recoverable from the key by parsing.
+// Anything that needs the space for a session must read it from here.
+const sessionSpaces = new Map<string, string>();
 
 let taskWorkers: TaskWorkerController | null = null;
 
@@ -27,7 +32,23 @@ export function getSessionContext(sessionKey: string | null | undefined): unknow
 
 export function clearSessionContext(sessionKey: string): boolean {
   sessionOptions.delete(sessionKey);
+  sessionSpaces.delete(sessionKey);
   return sessionContexts.delete(sessionKey);
+}
+
+// Record the space a session belongs to at the point the session key is minted,
+// where the space id is still in scope. Never derive this by slicing the key:
+// the key format is owned by OpenClaw's route resolver and has already changed
+// once (0.6.6), which silently produced agent slugs where space ids were
+// expected.
+export function rememberSessionSpace(sessionKey: string, spaceId: string): void {
+  if (!sessionKey || !spaceId) return;
+  sessionSpaces.set(sessionKey, spaceId);
+}
+
+export function spaceForSession(sessionKey: string | null | undefined): string | undefined {
+  if (!sessionKey) return undefined;
+  return sessionSpaces.get(sessionKey);
 }
 
 export function setSessionOptions(sessionKey: string, opts: SessionOptions): void {
