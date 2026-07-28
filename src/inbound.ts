@@ -55,9 +55,24 @@ export async function handleSuiteInbound(params: {
 
   // Meeting scribe/triage payloads carry no `message` key at all, so bailing on
   // an empty body meant those dispatches never reached the agent.
+  //
+  // Three rungs, in order. BOTH of the first two are load-bearing; neither may
+  // be removed as redundant:
+  //   1. `message.content` — the chat path, and (once the core change that adds
+  //      a `message` key to a native `system_event` merges) the responsibility
+  //      path too. Forward-compat: this must not regress when core lands.
+  //   2. `signal.prompt` — what TODAY's production `system_event` carries. The
+  //      server lifts the prompt to the signal root specifically so a federated
+  //      runtime need not dig into `signal.metadata`. This is the rung that
+  //      actually fires on deploy day; it must not later be deleted as "dead"
+  //      once rung 1 starts firing.
+  //   3. the placeholder — a dispatch that genuinely carries no body at all.
   const incomingBody = payload.message?.content?.trim() ?? "";
+  const promptBody = payload.signal?.prompt?.trim() ?? "";
   const rawBody =
-    incomingBody || (isDispatch ? `System dispatch: ${signalReason ?? "unknown"}` : "");
+    incomingBody ||
+    promptBody ||
+    (isDispatch ? `System dispatch: ${signalReason ?? "unknown"}` : "");
   if (!rawBody) {
     runtime.log(`[suite-inbound] empty message body, signal=${payload.signal?.reason} task=${payload.signal?.task_id}`);
     return;
@@ -66,10 +81,56 @@ export async function handleSuiteInbound(params: {
   // For orchestrated signals, the signal.space_id is the execution space which
   // isn't in the agent's routing config. Use the execution space for replies but
   // route via a synthetic peer so the default agent binding resolves correctly.
-  const spaceId = payload.signal.space_id || payload.signal.task_id || "unknown";
+  const spaceId = payload.signal?.space_id || payload.signal?.task_id || "unknown";
 
-  const senderId = payload.message.author || (isLifecycleSignal ? "TaskRouter" : "unknown");
-  const senderName = payload.message.author || (isLifecycleSignal ? "TaskRouter" : "unknown");
+  // The ONLY address that may go on the wire. `spaceId` above is a local
+  // discriminator: it legitimately falls back to the task id for session keys
+  // and in-process maps, but a task id is NOT a space id and "unknown" is not
+  // even a UUID. Server-side, `runtime_channel.ex handle_in("reply", ...)` calls
+  // `NodeContext.set_space(agent_id, space_id)` BEFORE the participant check,
+  // then pushes "Agent is not a participant in this space" and DROPS the
+  // message — so a task id here discards the agent's entire answer and poisons
+  // NodeContext. `"unknown"` is worse: `Repo.get_by(Participant, space_id:
+  // "unknown", ...)` against a `:binary_id` column raises Ecto.Query.CastError
+  // and takes the runtime channel process down.
+  //
+  // This gate generalises to the outbound path the discipline already applied
+  // to the session<->space binding below ("Only a genuine `signal.space_id`
+  // counts"). A responsibility firing has no chat space BY DESIGN — the agent
+  // acts through MCP tools rather than replying into a room — so suppressing
+  // the send is correct behaviour, not degradation.
+  const replySpaceId = isSpaceUuid(payload.signal?.space_id)
+    ? payload.signal.space_id!
+    : null;
+  let suppressedSendLogged = false;
+  const noReplySpace = () => {
+    if (suppressedSendLogged) return;
+    suppressedSendLogged = true;
+    runtime.log(
+      `[suite-inbound] no reply space for signal=${signalReason ?? "unknown"} ` +
+      `task=${taskId ?? "none"}; suppressing wire sends (would have addressed ${spaceId})`
+    );
+  };
+
+  // `payload.message` is absent entirely on a native `system_event`. This
+  // dereference used to be unguarded and threw
+  // `TypeError: Cannot read properties of undefined (reading 'author')`
+  // before the try/catch below was ever entered, which src/channel.ts flattened
+  // to a single `attention handler error` line: the agent never woke.
+  //
+  // "Startup Suite" rather than "unknown" is load-bearing, not cosmetic:
+  // `enrichedBody` below is `**${senderName}**: ${rawBody}`, and the server's
+  // own chat-path payload carries `message.author == "Startup Suite"`. Matching
+  // it keeps the two body sources interchangeable, so the agent's prompt reads
+  // identically before and after core's `message` key lands.
+  const author = payload.message?.author;
+  const fallbackSender = isLifecycleSignal
+    ? "TaskRouter"
+    : isDispatch
+      ? "Startup Suite"
+      : "unknown";
+  const senderId = author || fallbackSender;
+  const senderName = author || fallbackSender;
   const isGroup = true;
 
   // Resolve agent route. Prefer the Suite agent identifier when Suite packs it
@@ -249,6 +310,50 @@ export async function handleSuiteInbound(params: {
     body: enrichedBody,
   });
 
+  // Correlation ids, read from the SIGNAL ROOT.
+  //
+  // NEW PLUMBING, NOT A REPAIR. Measured against the real handler before this
+  // change, the finalized context was exactly 19 keys and not one of them was a
+  // correlation id: `responsibility_key`, `feature`, `trigger_kind`,
+  // `project_id`, `plan_id` and `stage_id` reached the agent NOT AT ALL, and
+  // `task_id` was in scope at the top of this function but never forwarded. A
+  // dispatched agent therefore had to re-derive the plan it was woken for.
+  //
+  // RULING — READ THE ROOT, NEVER `signal.metadata`. The ids appear in BOTH
+  // places on the wire. Root wins here because:
+  //   * root is the lift core added specifically so a federated runtime need
+  //     not dig into metadata;
+  //   * `signal.metadata` ALSO carries the full (multi-kilobyte) prompt, so
+  //     anything that forwards metadata drags the payload around with it;
+  //   * every other field this inbound path reads is already root-only
+  //     (`task_id`, `agent_slug`, `agent_id`, `space_id`, `message_id`,
+  //     `reason`, `task_status`), so reading metadata for these seven alone
+  //     would be the sole exception in the file.
+  //
+  // DELIBERATE DIVERGENCE FROM THE SIBLING CLIENT — DO NOT "HARMONISE".
+  // `claude-code-suite-channel` resolves the same ids out of `signal.metadata`,
+  // and its own loop is metadata-shaped for reasons that hold THERE (its
+  // handler was type-level blind to the root copies). That is the right call in
+  // that repo and the wrong call in this one. The two clients are expected to
+  // disagree on this line. A refactor that unifies them will silently break
+  // one; check-signal-correlation-ids.mjs pins the source in BOTH directions
+  // (metadata poisoned + root intact must emit the ROOT value; root deleted +
+  // metadata intact must emit NOTHING) so such a change cannot pass green.
+  //
+  // Each id is omitted rather than emitted as `undefined` — a chat mention must
+  // not start carrying seven empty keys.
+  const correlationCtx = {
+    ...(taskId ? { TaskId: taskId } : {}),
+    ...(payload.signal?.plan_id ? { PlanId: payload.signal.plan_id } : {}),
+    ...(payload.signal?.stage_id ? { StageId: payload.signal.stage_id } : {}),
+    ...(payload.signal?.project_id ? { ProjectId: payload.signal.project_id } : {}),
+    ...(payload.signal?.responsibility_key
+      ? { ResponsibilityKey: payload.signal.responsibility_key }
+      : {}),
+    ...(payload.signal?.feature ? { Feature: payload.signal.feature } : {}),
+    ...(payload.signal?.trigger_kind ? { TriggerKind: payload.signal.trigger_kind } : {}),
+  };
+
   // Build finalized context
   const ctxPayload = core.channel.reply.finalizeInboundContext({
     Body: body,
@@ -270,6 +375,7 @@ export async function handleSuiteInbound(params: {
     OriginatingChannel: CHANNEL_ID,
     OriginatingTo: `startup-suite:${spaceId}`,
     CommandAuthorized: true,
+    ...correlationCtx,
   });
 
   // Dispatch through the full agent pipeline with token-level streaming
@@ -285,7 +391,11 @@ export async function handleSuiteInbound(params: {
       pendingFlush = null;
     }
     if (text && client) {
-      client.sendReplyChunk(spaceId, chunkId, text, done);
+      if (!replySpaceId) {
+        noReplySpace();
+        return;
+      }
+      client.sendReplyChunk(replySpaceId, chunkId, text, done);
       lastChunkSentAt = Date.now();
       lastChunkText = text;
     }
@@ -330,7 +440,11 @@ export async function handleSuiteInbound(params: {
           if (!text || !client) return;
 
           if (info.kind !== "tool") {
-            client.sendReply(spaceId, text);
+            if (!replySpaceId) {
+              noReplySpace();
+              return;
+            }
+            client.sendReply(replySpaceId, text);
           }
 
           // Task-phase completion is now driven by real lifecycle/tool events
@@ -343,7 +457,11 @@ export async function handleSuiteInbound(params: {
         },
         onCleanup: () => {
           if (!isOrchestrated) {
-            client.sendTyping(spaceId, false);
+            if (!replySpaceId) {
+              noReplySpace();
+              return;
+            }
+            client.sendTyping(replySpaceId, false);
           }
         },
       });
@@ -386,8 +504,17 @@ export async function handleSuiteInbound(params: {
       clearTimeout(pendingFlush);
       pendingFlush = null;
     }
+    // Reachable for the FIRST time as of this change: the TypeError above used
+    // to escape before the `try` was entered, so this `finally` never ran. On a
+    // bare envelope it would have called `sendTyping("unknown", false)` and
+    // crashed the runtime channel process — the guard above is what keeps
+    // fixing the silent drop from becoming a disconnect loop.
     if (!isOrchestrated) {
-      client.sendTyping(spaceId, false);
+      if (replySpaceId) {
+        client.sendTyping(replySpaceId, false);
+      } else {
+        noReplySpace();
+      }
     }
   }
 }
