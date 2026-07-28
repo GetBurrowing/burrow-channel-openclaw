@@ -17,7 +17,8 @@
     "test:inbound-space-binding": "node scripts/check-inbound-space-binding.mjs",
     "test:system-event-body": "node scripts/check-system-event-body.mjs",
     "test:signal-correlation-ids": "node scripts/check-signal-correlation-ids.mjs",
-    "test": "npm run test:tool-contract && npm run test:client-info-handshake && npm run test:epic-create-tool && npm run test:space-resolution && npm run test:inbound-space-binding && npm run test:system-event-body && npm run test:signal-correlation-ids"
+    "test:system-event-envelope": "node scripts/check-system-event-envelope.mjs",
+    "test": "npm run test:tool-contract && npm run test:client-info-handshake && npm run test:epic-create-tool && npm run test:space-resolution && npm run test:inbound-space-binding && npm run test:system-event-body && npm run test:signal-correlation-ids && npm run test:system-event-envelope"
   },
   "openclaw": {
     "extensions": [
