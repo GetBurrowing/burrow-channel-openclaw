@@ -15,7 +15,8 @@
     "test:epic-create-tool": "node scripts/check-epic-create-tool.mjs",
     "test:space-resolution": "node scripts/check-space-resolution.mjs",
     "test:inbound-space-binding": "node scripts/check-inbound-space-binding.mjs",
-    "test": "npm run test:tool-contract && npm run test:client-info-handshake && npm run test:epic-create-tool && npm run test:space-resolution && npm run test:inbound-space-binding"
+    "test:system-event-body": "node scripts/check-system-event-body.mjs",
+    "test": "npm run test:tool-contract && npm run test:client-info-handshake && npm run test:epic-create-tool && npm run test:space-resolution && npm run test:inbound-space-binding && npm run test:system-event-body"
   },
   "openclaw": {
     "extensions": [
