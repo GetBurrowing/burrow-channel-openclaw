@@ -310,6 +310,50 @@ export async function handleSuiteInbound(params: {
     body: enrichedBody,
   });
 
+  // Correlation ids, read from the SIGNAL ROOT.
+  //
+  // NEW PLUMBING, NOT A REPAIR. Measured against the real handler before this
+  // change, the finalized context was exactly 19 keys and not one of them was a
+  // correlation id: `responsibility_key`, `feature`, `trigger_kind`,
+  // `project_id`, `plan_id` and `stage_id` reached the agent NOT AT ALL, and
+  // `task_id` was in scope at the top of this function but never forwarded. A
+  // dispatched agent therefore had to re-derive the plan it was woken for.
+  //
+  // RULING — READ THE ROOT, NEVER `signal.metadata`. The ids appear in BOTH
+  // places on the wire. Root wins here because:
+  //   * root is the lift core added specifically so a federated runtime need
+  //     not dig into metadata;
+  //   * `signal.metadata` ALSO carries the full (multi-kilobyte) prompt, so
+  //     anything that forwards metadata drags the payload around with it;
+  //   * every other field this inbound path reads is already root-only
+  //     (`task_id`, `agent_slug`, `agent_id`, `space_id`, `message_id`,
+  //     `reason`, `task_status`), so reading metadata for these seven alone
+  //     would be the sole exception in the file.
+  //
+  // DELIBERATE DIVERGENCE FROM THE SIBLING CLIENT — DO NOT "HARMONISE".
+  // `claude-code-suite-channel` resolves the same ids out of `signal.metadata`,
+  // and its own loop is metadata-shaped for reasons that hold THERE (its
+  // handler was type-level blind to the root copies). That is the right call in
+  // that repo and the wrong call in this one. The two clients are expected to
+  // disagree on this line. A refactor that unifies them will silently break
+  // one; check-signal-correlation-ids.mjs pins the source in BOTH directions
+  // (metadata poisoned + root intact must emit the ROOT value; root deleted +
+  // metadata intact must emit NOTHING) so such a change cannot pass green.
+  //
+  // Each id is omitted rather than emitted as `undefined` — a chat mention must
+  // not start carrying seven empty keys.
+  const correlationCtx = {
+    ...(taskId ? { TaskId: taskId } : {}),
+    ...(payload.signal?.plan_id ? { PlanId: payload.signal.plan_id } : {}),
+    ...(payload.signal?.stage_id ? { StageId: payload.signal.stage_id } : {}),
+    ...(payload.signal?.project_id ? { ProjectId: payload.signal.project_id } : {}),
+    ...(payload.signal?.responsibility_key
+      ? { ResponsibilityKey: payload.signal.responsibility_key }
+      : {}),
+    ...(payload.signal?.feature ? { Feature: payload.signal.feature } : {}),
+    ...(payload.signal?.trigger_kind ? { TriggerKind: payload.signal.trigger_kind } : {}),
+  };
+
   // Build finalized context
   const ctxPayload = core.channel.reply.finalizeInboundContext({
     Body: body,
@@ -331,6 +375,7 @@ export async function handleSuiteInbound(params: {
     OriginatingChannel: CHANNEL_ID,
     OriginatingTo: `startup-suite:${spaceId}`,
     CommandAuthorized: true,
+    ...correlationCtx,
   });
 
   // Dispatch through the full agent pipeline with token-level streaming
