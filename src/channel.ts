@@ -2,6 +2,7 @@ import type { ChannelPlugin } from "openclaw/plugin-sdk/core";
 import { Type as RawType } from "@sinclair/typebox";
 import { SuiteClient } from "./suite-client.js";
 import { handleSuiteInbound } from "./inbound.js";
+import { formatAttentionError } from "./attention-error.js";
 import {
   clearClient,
   clientForSpace,
@@ -757,7 +758,14 @@ export const suitePlugin: ChannelPlugin = {
               accountId,
             });
           } catch (err: any) {
-            runtime.error(`startup-suite: attention handler error: ${String(err)}`);
+            // Deliberately does NOT rethrow: a throw here propagates through the
+            // phoenix channel callback and kills the socket, turning one bad
+            // payload into a reconnect loop for every space on the account. The
+            // fix for the six-day silent-swallow outage is not to stop catching
+            // — it is that the line now names the signal, the agent, the
+            // correlation ids, whether `message` was even present, and the
+            // stack. See src/attention-error.ts.
+            runtime.error(formatAttentionError(err, payload));
           }
         },
 
