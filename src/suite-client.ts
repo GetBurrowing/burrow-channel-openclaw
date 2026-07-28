@@ -61,10 +61,49 @@ export interface AttentionPayload {
     // bindings instead of falling through to the channel default.
     agent_id?: string;
     agent_slug?: string;
+    // Responsibility-firing fields. The server has sent these at the SIGNAL
+    // ROOT for some time — it lifts them out of `metadata` specifically so a
+    // federated runtime need not dig — but this client had never named them,
+    // so nothing in the inbound path could read them without a cast. They are
+    // the correlation ids a dispatched agent needs to call back into the plan
+    // engine, plus the prompt body a native `system_event` carries INSTEAD of
+    // a `message` key.
+    //
+    // `metadata` also mirrors the four ids AND repeats the (multi-kilobyte)
+    // prompt. Read the root, never `metadata`: forwarding metadata wholesale
+    // doubles the payload, and this repo's whole inbound path already reads
+    // root only. (The sibling client, claude-code-suite-channel, pulls these
+    // out of `signal.metadata`. That is the right call THERE and the wrong
+    // call here — do not "harmonise" the two.)
+    prompt?: string;
+    responsibility_key?: string;
+    feature?: string;
+    trigger_kind?: string;
+    project_id?: string;
+    plan_id?: string;
+    stage_id?: string;
+    metadata?: Record<string, unknown>;
   };
-  message: { content: string; author: string };
-  history: Array<{ content: string; author: string; role?: string }>;
-  context: {
+  // OPTIONAL, AND THAT IS THE POINT. A native `system_event` — the shape
+  // `Platform.Responsibilities.Router.native_reason_for/1` produces when it
+  // maps `:event_topic` / `:cron` / `:webhook` -> `:system_event` — sends
+  // `signal` ALONE. It omits `message`, `history` and `context` entirely.
+  // Only the chat path sends all four keys.
+  //
+  // Declaring these three required was not a cosmetic inaccuracy: it is what
+  // licensed the unguarded `payload.message.author` at src/inbound.ts:71-72,
+  // which throws `TypeError: Cannot read properties of undefined (reading
+  // 'author')` on every native system_event, gets flattened to a single
+  // `attention handler error` line by src/channel.ts, and drops the dispatch
+  // silently. The agent never wakes.
+  //
+  // CAVEAT: tsconfig.json sets `"strict": false`, so widening these does NOT
+  // make `tsc` flag that dereference. This change buys documentation, editor
+  // signal, and a type that stops lying — it is not the fix. The runtime
+  // guard and the captured-envelope fixture are.
+  message?: { content?: string; author?: string; attachments?: unknown[] };
+  history?: Array<{ content: string; author: string; role?: string }>;
+  context?: {
     // Chat attention context (from ContextPlane)
     space?: { id: string; name: string; description?: string };
     canvases?: Array<{ id: string; title: string; content: string }>;
