@@ -230,6 +230,22 @@ The plan engine advances stages automatically when all validations on a stage re
 
 ---
 
+## External X Context
+
+Suite remains the system of record for spaces, tasks, plans, and approvals. If a
+plan also needs structured public X context, an operator can install
+[TweetClaw](https://github.com/Xquik-dev/tweetclaw) on the same OpenClaw gateway:
+
+```bash
+openclaw plugins install npm:@xquik/tweetclaw
+```
+
+Use read results to create a Suite task, attach evidence to a canvas, or inform
+a plan review. Keep API keys and raw exports out of Suite content. Require human
+approval before any external write action.
+
+---
+
 ## Security
 
 - All connections are **outbound** from OpenClaw (NAT-safe, no port forwarding needed)
