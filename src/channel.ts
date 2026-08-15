@@ -361,6 +361,46 @@ export const suitePlugin: ChannelPlugin = {
       execute: suiteToolExecute("review_request_create"),
     },
     {
+      name: "suite_review_request_get",
+      label: "Get Suite Review Request",
+      description:
+        "Fetch a single review request by id, with all of its review items (id, label, status, feedback, reviewed_by, reviewed_at, canvas_id, content). Precedence rule: the review item row is authoritative for WHAT A HUMAN SAID; the validation row is gate state and can legitimately read 'pending' again after a gate is reopened. An item reading needs_revision alongside a pending validation means the item is the ruling.",
+      parameters: Type.Object({
+        review_request_id: Type.String({ description: "The review request ID to fetch" }),
+      }),
+      execute: suiteToolExecute("review_request_get"),
+    },
+    {
+      name: "review_request_get",
+      label: "Get Review Request",
+      description:
+        "Alias for suite_review_request_get. Use when Suite dispatch prompts refer to review_request_get directly.",
+      parameters: Type.Object({
+        review_request_id: Type.String({ description: "The review request ID to fetch" }),
+      }),
+      execute: suiteToolExecute("review_request_get"),
+    },
+    {
+      name: "suite_review_item_list",
+      label: "List Suite Review Items",
+      description:
+        "List every review item across all review requests on a task, including superseded requests (labelled as such). Each item carries its review_request_id, request_status, and validation_id. Use this when you have lost a review request id. Precedence rule: the review item row is authoritative for WHAT A HUMAN SAID; the validation row is gate state and can legitimately read 'pending' again after a gate is reopened.",
+      parameters: Type.Object({
+        task_id: Type.String({ description: "The task ID whose review items to list" }),
+      }),
+      execute: suiteToolExecute("review_item_list"),
+    },
+    {
+      name: "review_item_list",
+      label: "List Review Items",
+      description:
+        "Alias for suite_review_item_list. Use when Suite dispatch prompts refer to review_item_list directly.",
+      parameters: Type.Object({
+        task_id: Type.String({ description: "The task ID whose review items to list" }),
+      }),
+      execute: suiteToolExecute("review_item_list"),
+    },
+    {
       name: "suite_space_list",
       label: "List Suite Spaces",
       description:
