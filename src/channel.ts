@@ -54,23 +54,32 @@ export const suitePlugin: ChannelPlugin = {
 
   config: {
     listAccountIds: (cfg) => listConfiguredAccountIds(cfg),
+    // Everything here reads the RESOLVED config: `configured` means the token
+    // ref resolved, not that a `token` string is present. The resolved account
+    // deliberately carries no token value -- startAccount re-resolves it -- so
+    // nothing OpenClaw does with an account object can print the token.
     resolveAccount: (cfg, accountId) => {
       const id = String(accountId ?? "default");
       const suiteConfig = resolveAccountConfig(cfg, id);
+      const configured = Boolean(suiteConfig?.url && suiteConfig?.runtimeId && suiteConfig?.token);
       return {
         accountId: id,
         enabled: Boolean(suiteConfig),
-        configured: Boolean(suiteConfig?.url && suiteConfig?.runtimeId && suiteConfig?.token),
-        ...suiteConfig,
+        configured,
+        url: suiteConfig?.url,
+        runtimeId: suiteConfig?.runtimeId,
+        autoJoinSpaces: suiteConfig?.autoJoinSpaces,
+        reconnectIntervalMs: suiteConfig?.reconnectIntervalMs,
+        maxReconnectIntervalMs: suiteConfig?.maxReconnectIntervalMs,
       };
     },
     defaultAccountId: () => "default",
     isEnabled: (account) => Boolean(account?.enabled ?? true),
-    isConfigured: (account) => Boolean(account?.url && account?.runtimeId && account?.token),
+    isConfigured: (account) => Boolean(account?.configured),
     describeAccount: (account) => ({
       accountId: String(account?.accountId ?? "default"),
       enabled: Boolean(account?.enabled ?? true),
-      configured: Boolean(account?.url && account?.runtimeId && account?.token),
+      configured: Boolean(account?.configured),
     }),
   },
 

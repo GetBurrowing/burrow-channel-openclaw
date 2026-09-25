@@ -30,7 +30,11 @@
                 },
                 "token": {
                   "type": "string",
-                  "description": "Authentication token for the runtime"
+                  "description": "Runtime token REFERENCE. \"file:<absolute path>\" reads a regular file owned by the gateway user with mode 0600 or 0400. \"keychain:<item>\" reads the macOS login keychain item (account <item>, service tokenKeychainService) via /usr/bin/security; macOS only. Any other value is a literal token: still accepted, but deprecated and warned about once."
+                },
+                "tokenKeychainService": {
+                  "type": "string",
+                  "description": "Keychain service name for a \"keychain:<item>\" token ref. Required with keychain refs; ignored otherwise."
                 },
                 "autoJoinSpaces": {
                   "type": "array",
@@ -87,7 +91,11 @@
                 },
                 "token": {
                   "type": "string",
-                  "description": "Authentication token for the runtime"
+                  "description": "Runtime token REFERENCE. \"file:<absolute path>\" reads a regular file owned by the gateway user with mode 0600 or 0400. \"keychain:<item>\" reads the macOS login keychain item (account <item>, service tokenKeychainService) via /usr/bin/security; macOS only. Any other value is a literal token: still accepted, but deprecated and warned about once."
+                },
+                "tokenKeychainService": {
+                  "type": "string",
+                  "description": "Keychain service name for a \"keychain:<item>\" token ref. Required with keychain refs; ignored otherwise."
                 },
                 "autoJoinSpaces": {
                   "type": "array",
