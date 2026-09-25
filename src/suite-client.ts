@@ -154,6 +154,21 @@ export interface AttentionPayload {
   tools?: Array<{ name: string; description: string; parameters: object }>;
 }
 
+/** Optional annotations on a `reply` push (core `Platform.Chat.ReplyContext`). */
+export interface ReplyExtras {
+  in_reply_to_message_id?: string;
+  context?: string;
+}
+
+function definedExtras(extras?: ReplyExtras): ReplyExtras {
+  const out: ReplyExtras = {};
+  if (extras?.in_reply_to_message_id !== undefined) {
+    out.in_reply_to_message_id = extras.in_reply_to_message_id;
+  }
+  if (extras?.context !== undefined) out.context = extras.context;
+  return out;
+}
+
 export class SuiteClient {
   private socket: Socket | null = null;
   private channel: any = null;
@@ -259,8 +274,15 @@ export class SuiteClient {
     }
   }
 
-  sendReply(spaceId: string, content: string): void {
-    this.channel?.push("reply", { space_id: spaceId, content });
+  /**
+   * `extras` carries optional reply annotations (task 01a0d8de), today only
+   * `in_reply_to_message_id`. Undefined values are left off the wire, so a
+   * reply without extras pushes the same `{space_id, content}` it always did.
+   * Core validates each annotation and drops an invalid one without failing
+   * the reply.
+   */
+  sendReply(spaceId: string, content: string, extras?: ReplyExtras): void {
+    this.channel?.push("reply", { space_id: spaceId, content, ...definedExtras(extras) });
   }
 
   sendTyping(spaceId: string, typing: boolean): void {

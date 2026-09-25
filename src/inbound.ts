@@ -433,6 +433,16 @@ export async function handleSuiteInbound(params: {
       },
     });
 
+    // The inbound message this run answers (task 01a0d8de). Suite links the
+    // reply to it. Absent on system_event dispatches, which answer no message;
+    // core validates the id and drops it, without failing the reply, if it is
+    // not a message in the reply's space.
+    const inReplyTo = payload.signal?.message_id;
+    const replyExtras =
+      typeof inReplyTo === "string" && inReplyTo.length > 0
+        ? { in_reply_to_message_id: inReplyTo }
+        : undefined;
+
     const { dispatcher, replyOptions: dispatcherReplyOptions, markDispatchIdle, markRunComplete } =
       core.channel.reply.createReplyDispatcherWithTyping({
         deliver: async (replyPayload: any, info: { kind: string }) => {
@@ -444,7 +454,7 @@ export async function handleSuiteInbound(params: {
               noReplySpace();
               return;
             }
-            client.sendReply(replySpaceId, text);
+            client.sendReply(replySpaceId, text, replyExtras);
           }
 
           // Task-phase completion is now driven by real lifecycle/tool events
