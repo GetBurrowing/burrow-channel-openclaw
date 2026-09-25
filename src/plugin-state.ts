@@ -3,6 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { SuiteClient, SuiteConfig } from "./suite-client.js";
 import { TaskWorkerController } from "./task-worker-controller.js";
+import { resolveTokenRef } from "./token-ref.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const clients = new Map<string, SuiteClient>();
 const spaceToAccountId = new Map<string, string>();
@@ -76,14 +77,23 @@ function channelConfigRoot(cfg: any): any {
   return null;
 }
 
+// The account's `token` is a REF (`file:<path>`, `keychain:<item>` with
+// `tokenKeychainService`) or a deprecated literal; see src/token-ref.ts. An
+// account whose ref does not resolve is NOT configured: this returns null and
+// the resolver has already logged one line naming the account and the ref.
 export function resolveAccountConfig(cfg: any, accountId: string): SuiteConfig | null {
   const root = channelConfigRoot(cfg);
   const account = root?.accounts?.[accountId];
   if (account?.url && account?.runtimeId && account?.token) {
+    const token = resolveTokenRef(account.token, {
+      accountId,
+      keychainService: account.tokenKeychainService,
+    });
+    if (!token.ok) return null;
     return {
       url: account.url,
       runtimeId: account.runtimeId,
-      token: account.token,
+      token: token.value,
       autoJoinSpaces: account.autoJoinSpaces ?? [],
       reconnectIntervalMs: account.reconnectIntervalMs ?? 5000,
       maxReconnectIntervalMs: account.maxReconnectIntervalMs ?? 60000,
@@ -91,11 +101,20 @@ export function resolveAccountConfig(cfg: any, accountId: string): SuiteConfig |
   }
 
   if (accountId === "default") {
+    let legacy: any;
     try {
-      return loadLegacyConfig();
+      legacy = loadLegacyConfig();
     } catch {
       return null;
     }
+    if (!legacy?.url || !legacy?.runtimeId || !legacy?.token) return null;
+    const token = resolveTokenRef(legacy.token, {
+      accountId,
+      keychainService: legacy.tokenKeychainService,
+    });
+    if (!token.ok) return null;
+    const { tokenKeychainService: _svc, ...rest } = legacy;
+    return { ...rest, token: token.value };
   }
 
   return null;

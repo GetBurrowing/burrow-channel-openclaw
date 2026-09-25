@@ -159,7 +159,8 @@ When a Suite agent appears in multiple spaces (chat rooms), the plugin automatic
 |---|---|---|
 | `url` | Suite WebSocket endpoint | `wss://suite.milvenan.technology/runtime/ws` |
 | `runtimeId` | Your registered runtime ID | *(required)* |
-| `token` | Authentication token | *(required)* |
+| `token` | Runtime token **reference**: `file:<absolute path>` (a regular file owned by the gateway user, mode `0600` or `0400`) or `keychain:<item>` (macOS login keychain, read with `/usr/bin/security find-generic-password -s <tokenKeychainService> -a <item> -w`). Any other value is a literal token: still accepted, deprecated, warned about once per account. An unresolvable ref leaves the account unconfigured and logs one line naming the path or item, never the value. | *(required)* |
+| `tokenKeychainService` | Keychain service for a `keychain:<item>` ref. Required with keychain refs. | — |
 | `autoJoinSpaces` | Space IDs to auto-join on connect | `[]` |
 | `reconnectIntervalMs` | Initial reconnect delay (ms) | `5000` |
 | `maxReconnectIntervalMs` | Max reconnect delay (ms) | `60000` |
@@ -236,7 +237,7 @@ The plan engine advances stages automatically when all validations on a stage re
 - The runtime token authenticates the WebSocket connection to Suite
 - Suite handles user authentication via OIDC
 - Messages only route from authenticated Suite users in spaces the agent has joined
-- `token` values are sensitive — treat them like API keys; do not commit to source control
+- `token` values are sensitive — treat them like API keys; do not commit to source control. Prefer a `file:` or `keychain:` ref so `openclaw.json` holds no secret
 
 ---
 
