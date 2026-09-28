@@ -4,6 +4,7 @@ import WebSocket from "ws";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { BUILD, BUILD_ERROR, PROCESS_STARTED_AT } from "./build-identity.js";
 
 // Federation handshake: declare what client product is connecting so the Suite
 // dispatch renderer can distinguish OpenClaw runtimes (multi-agent per
@@ -27,9 +28,31 @@ const PLUGIN_VERSION: string = (() => {
   return "unknown";
 })();
 
-export const CLIENT_INFO = {
-  product: "openclaw" as const,
+// ── `build` / `build_error` / `started_at` ─────────────────────────────────
+//
+// `build` is the LOAD-BEARING identity: the commit sha the loaded code was
+// copied or built from (build-info.json, stamped by install.sh / update.sh /
+// `npm run build`; see src/build-identity.ts). It answers "is this runtime on
+// the build whose source I am reading?". `version` stays for humans only - it
+// is package.json's string and discriminates nothing. Without a valid stamp,
+// `build` is OMITTED and `build_error` says why, so core can tell "tried and
+// could not" from "predates the contract". `started_at` is the gateway
+// PROCESS start, never a connection time. All resolved once at module load,
+// so a rejoin re-sends the resident code's identity. Core reads them in
+// runtime_channel.ex (`normalize_build/1`, `normalize_started_at/1`).
+export interface ClientInfo {
+  product: "openclaw";
+  version: string;
+  build?: string;
+  build_error?: string;
+  started_at: string;
+}
+
+export const CLIENT_INFO: ClientInfo = {
+  product: "openclaw",
   version: PLUGIN_VERSION,
+  ...(BUILD !== null ? { build: BUILD } : { build_error: BUILD_ERROR ?? "build unresolved" }),
+  started_at: PROCESS_STARTED_AT,
 };
 
 export interface SuiteConfig {

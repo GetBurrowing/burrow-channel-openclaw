@@ -1,0 +1,12 @@
+# Once this file exists npm stops reading .gitignore, so it restates the
+# .gitignore entries that must stay out of the tarball - EXCEPT
+# build-info.json, which is gitignored (generated per checkout by
+# `npm run build`'s prebuild) but MUST ship: it is how the installed plugin
+# knows which commit it is (src/build-identity.ts). dist/ also ships, as it
+# did before this file existed.
+node_modules/
+config.json
+scripts/_fake-phoenix.mjs
+.env
+*.log
+.DS_Store
