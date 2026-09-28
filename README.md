@@ -76,6 +76,24 @@ bash update.sh
 openclaw gateway restart
 ```
 
+### Build identity
+
+On every runtime-channel join the plugin sends `client_info.build`: the git
+commit sha of the checkout it was copied or built from (40 hex characters,
+with `-dirty` appended when tracked files differed from `HEAD`), and
+`client_info.started_at`: when the gateway **process** that loaded the plugin
+started (never the connection time). The installed copy has no `.git`, so
+`install.sh` / `update.sh` (and `npm run build`, via `prebuild`) stamp the sha
+into `build-info.json` next to the code with `scripts/write-build-info.mjs`;
+the plugin reads it once when it loads. A reconnect therefore re-sends the
+resident code's identity, while a restart after `update.sh` sends the new one.
+Suite's `federation_status` shows it as `client_build`. `version` is
+`package.json`'s string, kept for humans only and never used as the build. If
+the stamp is missing or invalid, `build` is omitted and
+`client_info.build_error` says why; the plugin never guesses. To exercise the
+install path without touching a live install, set `SUITE_CHANNEL_EXT_DIR`
+(and, for `install.sh`, `SUITE_CHANNEL_OC_CONFIG`) to scratch paths.
+
 ---
 
 ## Configuration

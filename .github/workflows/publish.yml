@@ -34,6 +34,11 @@ jobs:
         run: |
           test -f dist/index.js
           test -f dist/setup-entry.js
+          # The commit stamp the installed plugin reports as client_info.build
+          # (written by prebuild). It is gitignored, so also assert the
+          # tarball actually carries it (.npmignore keeps it in).
+          test -f build-info.json
+          npm pack --dry-run --json | node -e 'const f=JSON.parse(require("fs").readFileSync(0,"utf8"))[0].files.map(x=>x.path); if(!f.includes("build-info.json")){console.error("build-info.json not in the npm tarball");process.exit(1)}'
 
       - name: Publish with Trusted Publishing
         run: |
