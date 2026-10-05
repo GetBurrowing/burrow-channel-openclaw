@@ -149,6 +149,12 @@ function resolveKeychain(
   deps: TokenRefDeps,
 ): { ok: true; value: string } | { ok: false; reason: string } {
   if (item === "") return { ok: false, reason: "keychain: ref needs an item name" };
+  // spec/token-ref.md "Syntax": an item is one plain word. Refused BEFORE
+  // `security` runs: a newline in an item makes the ref and the item disagree
+  // in every log line that prints it.
+  if (/[\s\x00-\x1f\x7f]/.test(item)) {
+    return { ok: false, reason: `keychain item ${JSON.stringify(item)} contains whitespace or a control character` };
+  }
   if ((deps.platform ?? process.platform) !== "darwin") {
     return { ok: false, reason: `keychain:${item}: keychain refs are macOS-only` };
   }
@@ -201,6 +207,15 @@ export function resolveTokenRef(
   if (token.startsWith(KEYCHAIN_PREFIX)) {
     const r = resolveKeychain(token.slice(KEYCHAIN_PREFIX.length), options.keychainService ?? "", deps);
     return "reason" in r ? fail("keychain", r.reason) : { ok: true, value: r.value, kind: "keychain" };
+  }
+
+  // spec/token-ref.md "Resolution" 1: a scheme-shaped string that is not one
+  // of ours (`env:`, `vault:`, `Keychain:`) is a mistyped ref, not a token.
+  // Runtime tokens are url-safe base64 and never contain `:`, so this cannot
+  // refuse a real literal. Only the scheme is repeated, never the rest.
+  const scheme = /^([A-Za-z][A-Za-z0-9+.-]*):/.exec(token);
+  if (scheme !== null) {
+    return fail("literal", `unknown token ref scheme ${JSON.stringify(`${scheme[1]}:`)}; use file:<absolute path> or keychain:<item>`);
   }
 
   if (!literalWarned.has(account)) {

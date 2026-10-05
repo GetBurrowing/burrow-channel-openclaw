@@ -1,0 +1,34 @@
+# token-ref vectors (task 01a0d6b9).
+#
+# suite-cli defines token refs once (spec/token-ref.md) with shared test
+# vectors. This repo vendors spec/token-ref-vectors.json, pinned to a
+# suite-cli commit in spec/token-ref-vectors.pin. This job fails when the copy
+# differs from that commit's file, or when src/token-ref.ts fails a vector.
+#
+# Deliberately absent: path filters, `continue-on-error` and step-level `if:`,
+# each of which can turn a job green while it runs nothing.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  token-ref-vectors:
+    name: token-ref vectors
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - run: sh scripts/check-token-ref-vectors.sh
+      - run: node scripts/run-token-ref-vectors.mjs
