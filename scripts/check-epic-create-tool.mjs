@@ -6,9 +6,9 @@
 //   - Returns `[]` when EVERY configured account has `useMcpTools: true`
 //     (all-accounts MCP cutover suppression — preserved from PR #19).
 //   - The `execute` callback for `suite_epic_create` invokes
-//     `client.callTool("epic.create", args)` — i.e. the dotted wire-format
-//     name reaches Suite, matching the convention from the skill_* commit
-//     (0984486 / task 019dfaea).
+//     `client.callTool("epic_create", args)` — the underscore wire name core
+//     registers today. SuiteClient.callTool falls back to `epic.create` for
+//     old servers (task 01a14a7d; see check-tool-name-fallback.mjs).
 //
 // Loads the COMPILED files from dist/. Run `npm run build` first.
 
@@ -73,7 +73,7 @@ assert.deepEqual(
   `agentTools should be [] when every account has useMcpTools: true; got ${mcpTools.length} tools`,
 );
 
-// ── 3. suite_epic_create.execute hits client.callTool("epic.create", ...) ─
+// ── 3. suite_epic_create.execute hits client.callTool("epic_create", ...) ─
 const calls = [];
 const fakeClient = {
   callTool(tool, args) {
@@ -98,8 +98,8 @@ try {
   assert.equal(calls.length, 1, `expected exactly 1 callTool invocation, got ${calls.length}`);
   assert.equal(
     calls[0].tool,
-    "epic.create",
-    `wire tool name should be "epic.create" (dotted), got ${JSON.stringify(calls[0].tool)}`,
+    "epic_create",
+    `first wire tool name should be "epic_create" (underscore; SuiteClient.callTool falls back to dotted), got ${JSON.stringify(calls[0].tool)}`,
   );
   assert.deepEqual(
     calls[0].args,
@@ -108,20 +108,20 @@ try {
   );
   assert.ok(result?.content, "execute should return an object with `content`");
 
-  // The unprefixed alias must dispatch to the same dotted handler.
+  // The unprefixed alias must dispatch to the same underscore wire name.
   const aliasTool = legacyTools.find((t) => t.name === "epic_create");
   assert.ok(aliasTool, "epic_create alias entry should exist");
   await aliasTool.execute("call-id-124", args);
   assert.equal(calls.length, 2, "alias should also invoke callTool");
   assert.equal(
     calls[1].tool,
-    "epic.create",
-    `alias should also dispatch to "epic.create"; got ${JSON.stringify(calls[1].tool)}`,
+    "epic_create",
+    `alias should also dispatch to "epic_create"; got ${JSON.stringify(calls[1].tool)}`,
   );
 } finally {
   clearClient("default");
 }
 
 console.log(
-  `epic_create agentTools contract OK: legacy lists both names, MCP cutover suppresses, dispatch hits "epic.create".`,
+  `epic_create agentTools contract OK: legacy lists both names, MCP cutover suppresses, dispatch hits "epic_create".`,
 );
