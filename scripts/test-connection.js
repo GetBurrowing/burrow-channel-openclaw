@@ -5,7 +5,18 @@ import { Socket } from "phoenix";
 import WebSocket from "ws";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const accountId = process.argv[2] || process.env.SUITE_ACCOUNT_ID || "";
+// BURROW_ACCOUNT_ID first; SUITE_ACCOUNT_ID still works but is deprecated and
+// warned about once on stderr. Same pair as scripts/env-fallbacks.sh (this
+// file is copied into the extension dir alone, so it cannot source that).
+function accountIdFromEnv(env) {
+  if (env.BURROW_ACCOUNT_ID) return env.BURROW_ACCOUNT_ID;
+  if (env.SUITE_ACCOUNT_ID) {
+    console.error("[burrow-channel-openclaw] SUITE_ACCOUNT_ID is deprecated; set BURROW_ACCOUNT_ID");
+    return env.SUITE_ACCOUNT_ID;
+  }
+  return "";
+}
+const accountId = process.argv[2] || accountIdFromEnv(process.env);
 
 let config;
 let configSource;

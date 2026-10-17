@@ -4,7 +4,7 @@ set -euo pipefail
 EXT_DIR="$HOME/.openclaw/extensions/startup-suite-channel"
 OC_CONFIG="$HOME/.openclaw/openclaw.json"
 
-echo "Uninstalling Startup Suite Channel plugin..."
+echo "Uninstalling Burrow Channel plugin for OpenClaw..."
 echo ""
 
 # ── 1. Remove extension directory ─────────────────────────────────

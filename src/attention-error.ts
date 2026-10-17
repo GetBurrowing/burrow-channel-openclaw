@@ -87,7 +87,7 @@ export function formatAttentionError(err: unknown, payload: AttentionPayload): s
       : String(err);
 
   return (
-    `startup-suite: attention handler error: ` +
+    `burrow: attention handler error: ` +
     `signal=${field(signal?.reason, "unknown")} ` +
     `responsibility_key=${field(signal?.responsibility_key, "none")} ` +
     `agent_slug=${field(signal?.agent_slug, "none")} ` +

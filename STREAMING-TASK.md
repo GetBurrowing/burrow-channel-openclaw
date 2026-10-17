@@ -1,22 +1,22 @@
-# Task: Add Response Streaming from OpenClaw to Startup Suite
+# Task: Add Response Streaming from OpenClaw to Burrow
 
 ## Goal
-Stream agent responses progressively to Suite chat instead of waiting for the full reply. When the agent is generating a response, users should see text appear incrementally.
+Stream agent responses progressively to Burrow chat instead of waiting for the full reply. When the agent is generating a response, users should see text appear incrementally.
 
 ## Architecture
 
 ### Current Flow (no streaming)
 ```
-User message → Suite → RuntimeChannel → Plugin (attention) → OpenClaw agent pipeline
+User message → Burrow → RuntimeChannel → Plugin (attention) → OpenClaw agent pipeline
 → agent generates full reply → deliver callback → plugin.sendReply(spaceId, fullText)
-→ Suite RuntimeChannel → ChatLive → rendered message
+→ Burrow RuntimeChannel → ChatLive → rendered message
 ```
 
 ### Target Flow (with streaming)
 ```
-User message → Suite → RuntimeChannel → Plugin (attention) → OpenClaw agent pipeline
+User message → Burrow → RuntimeChannel → Plugin (attention) → OpenClaw agent pipeline
 → agent starts generating → onAgentEvent listener catches assistant chunks
-→ plugin pushes "reply_chunk" events to Suite via WebSocket
+→ plugin pushes "reply_chunk" events to Burrow via WebSocket
 → RuntimeChannel forwards to ChatLive via PubSub
 → ChatLive accumulates chunks and renders progressive text
 → final deliver callback sends complete message (replaces streaming placeholder)
@@ -32,13 +32,13 @@ User message → Suite → RuntimeChannel → Plugin (attention) → OpenClaw ag
 
 **Approach**: The `deliver` callback in `dispatchInboundReplyWithBase` is called once per reply block. For multi-block responses (tool calls then final text), it may be called multiple times. We use this as our streaming hook:
 
-1. Before calling `dispatchInboundReplyWithBase`, push a `typing` event with `typing: true` to Suite
+1. Before calling `dispatchInboundReplyWithBase`, push a `typing` event with `typing: true` to Burrow
 2. The `deliver` callback receives each block — push `reply_chunk` events for each
 3. After dispatch completes, send `typing: false`
 
 This gives block-level streaming (not token-level). For token-level streaming in the future, we'd need OpenClaw to expose `onAgentEvent` to external plugins.
 
-Additionally, wrap the deliver callback to push intermediate content to Suite as `reply_chunk` events, allowing the UI to show progressive text.
+Additionally, wrap the deliver callback to push intermediate content to Burrow as `reply_chunk` events, allowing the UI to show progressive text.
 
 #### 1b. Add `sendReplyChunk` to `SuiteClient` (`suite-client.ts`)
 - New method: `sendReplyChunk(spaceId: string, chunkId: string, text: string, done: boolean)`
@@ -51,7 +51,7 @@ Additionally, wrap the deliver callback to push intermediate content to Suite as
 - Accumulate text, flush on timer or when done
 - This prevents flooding the WebSocket
 
-### Part 2: Suite Side (`Startup-Suite/core`)
+### Part 2: Burrow Side (`Startup-Suite/core`)
 
 #### 2a. Handle `reply_chunk` in RuntimeChannel (`runtime_channel.ex`)
 - New `handle_in("reply_chunk", ...)` clause

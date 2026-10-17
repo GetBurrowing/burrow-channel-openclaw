@@ -1,0 +1,73 @@
+{
+  "channels": {
+    "startup-suite": {
+      "enabled": true,
+      "dmPolicy": "allowlist",
+      "allowFrom": [
+        "*"
+      ],
+      "accounts": {
+        "beacon": {
+          "url": "wss://core.example.test/runtime/ws",
+          "runtimeId": "rt-beacon-0700",
+          "token": "fixture-literal-token-beacon",
+          "autoJoinSpaces": [],
+          "reconnectIntervalMs": 5000,
+          "maxReconnectIntervalMs": 60000
+        },
+        "builder": {
+          "url": "wss://core.example.test/runtime/ws",
+          "runtimeId": "rt-builder-0700",
+          "token": "fixture-literal-token-builder",
+          "autoJoinSpaces": [],
+          "reconnectIntervalMs": 5000,
+          "maxReconnectIntervalMs": 60000
+        },
+        "pixel": {
+          "url": "wss://core.example.test/runtime/ws",
+          "runtimeId": "rt-pixel-0700",
+          "token": "fixture-literal-token-pixel",
+          "autoJoinSpaces": [],
+          "reconnectIntervalMs": 5000,
+          "maxReconnectIntervalMs": 60000
+        }
+      }
+    }
+  },
+  "bindings": [
+    {
+      "type": "route",
+      "agentId": "beacon",
+      "match": {
+        "channel": "startup-suite",
+        "accountId": "beacon"
+      }
+    },
+    {
+      "type": "route",
+      "agentId": "builder",
+      "match": {
+        "channel": "startup-suite",
+        "accountId": "builder"
+      }
+    },
+    {
+      "type": "route",
+      "agentId": "pixel",
+      "match": {
+        "channel": "startup-suite",
+        "accountId": "pixel"
+      }
+    }
+  ],
+  "plugins": {
+    "allow": [
+      "startup-suite-channel-plugin"
+    ],
+    "entries": {
+      "startup-suite-channel-plugin": {
+        "enabled": true
+      }
+    }
+  }
+}
