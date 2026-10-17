@@ -615,12 +615,13 @@ export const suitePlugin: ChannelPlugin = {
       execute: suiteToolExecute("org_memory_search"),
     },
     // ── Skill registry tools ──────────────────────────────────────────
-    // NOTE: Suite registers these with dotted names (`skill.list`, `skill.get`,
-    // `skill.upsert`) and has no underscore→dot translation in the runtime
-    // channel path (Platform.Federation.ToolSurface.execute matches strings
-    // exactly). The OpenClaw-facing tool name is underscored (per harness
-    // convention) but `suiteToolExecute` is invoked with the dotted name so
-    // the wire payload reaches the right handler.
+    // NOTE: Suite resolves `tool_call` names by exact string match, with no
+    // underscore<->dot translation. Older servers register these skill tools
+    // only with dotted names (`skill.list`, `skill.get`, `skill.upsert`);
+    // newer ones register underscore names and keep dotted as hidden aliases.
+    // We pass the underscore name here and SuiteClient.callTool retries once
+    // with the dotted twin (DOTTED_TWINS) when the server replies "unknown
+    // tool". The same applies to epic_create / epic.create below.
     {
       name: "suite_skill_list",
       label: "List Suite Skills",
@@ -629,7 +630,7 @@ export const suitePlugin: ChannelPlugin = {
       parameters: Type.Object({
         query: Type.Optional(Type.String({ description: "Case-insensitive substring to filter by. Omit to list everything." })),
       }),
-      execute: suiteToolExecute("skill.list"),
+      execute: suiteToolExecute("skill_list"),
     },
     {
       name: "suite_skill_get",
@@ -640,7 +641,7 @@ export const suitePlugin: ChannelPlugin = {
         slug: Type.Optional(Type.String({ description: "Skill slug (preferred lookup key)." })),
         id: Type.Optional(Type.String({ description: "Skill UUID (alternative lookup key)." })),
       }),
-      execute: suiteToolExecute("skill.get"),
+      execute: suiteToolExecute("skill_get"),
     },
     {
       name: "suite_skill_upsert",
@@ -652,7 +653,7 @@ export const suitePlugin: ChannelPlugin = {
         description: Type.String({ description: "One-line summary shown in skill.list." }),
         content: Type.String({ description: "Full markdown body of the skill playbook." }),
       }),
-      execute: suiteToolExecute("skill.upsert"),
+      execute: suiteToolExecute("skill_upsert"),
     },
     {
       name: "suite_epic_create",
@@ -668,7 +669,7 @@ export const suitePlugin: ChannelPlugin = {
         target_branch: Type.Optional(Type.String({ description: "Git branch the epic's work targets." })),
         deploy_target: Type.Optional(Type.String({ description: "Deployment environment / target the epic delivers to." })),
       }),
-      execute: suiteToolExecute("epic.create"),
+      execute: suiteToolExecute("epic_create"),
     },
     // Unprefixed aliases — let dispatch prompts referring to canonical tool
     // names (e.g. `skill_list`) resolve without the `suite_` prefix.
@@ -680,7 +681,7 @@ export const suitePlugin: ChannelPlugin = {
       parameters: Type.Object({
         query: Type.Optional(Type.String({ description: "Case-insensitive substring to filter by. Omit to list everything." })),
       }),
-      execute: suiteToolExecute("skill.list"),
+      execute: suiteToolExecute("skill_list"),
     },
     {
       name: "skill_get",
@@ -691,7 +692,7 @@ export const suitePlugin: ChannelPlugin = {
         slug: Type.Optional(Type.String({ description: "Skill slug (preferred lookup key)." })),
         id: Type.Optional(Type.String({ description: "Skill UUID (alternative lookup key)." })),
       }),
-      execute: suiteToolExecute("skill.get"),
+      execute: suiteToolExecute("skill_get"),
     },
     {
       name: "skill_upsert",
@@ -703,7 +704,7 @@ export const suitePlugin: ChannelPlugin = {
         description: Type.String({ description: "One-line summary shown in skill.list." }),
         content: Type.String({ description: "Full markdown body of the skill playbook." }),
       }),
-      execute: suiteToolExecute("skill.upsert"),
+      execute: suiteToolExecute("skill_upsert"),
     },
     {
       name: "epic_create",
@@ -719,7 +720,7 @@ export const suitePlugin: ChannelPlugin = {
         target_branch: Type.Optional(Type.String({ description: "Git branch the epic's work targets." })),
         deploy_target: Type.Optional(Type.String({ description: "Deployment environment / target the epic delivers to." })),
       }),
-      execute: suiteToolExecute("epic.create"),
+      execute: suiteToolExecute("epic_create"),
     },
     ];
   },

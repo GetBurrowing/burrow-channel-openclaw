@@ -192,6 +192,38 @@ function definedExtras(extras?: ReplyExtras): ReplyExtras {
   return out;
 }
 
+/**
+ * Underscore wire names whose legacy dotted spelling an OLD Suite server
+ * still requires. Keyed by the underscore form; see SuiteClient.callTool.
+ */
+export const DOTTED_TWINS: Readonly<Record<string, string>> = Object.freeze({
+  skill_list: "skill.list",
+  skill_get: "skill.get",
+  skill_upsert: "skill.upsert",
+  epic_create: "epic.create",
+});
+
+/** `skill.list` -> `skill_list`; names without a dot pass through unchanged. */
+export function underscoreToolName(tool: string): string {
+  return tool.replace(/\./g, "_");
+}
+
+/** The dotted spelling to fall back to, or undefined when there is none. */
+export function dottedTwin(tool: string): string | undefined {
+  if (tool.includes(".")) return tool;
+  return DOTTED_TWINS[tool];
+}
+
+/**
+ * True only for core's name-lookup miss
+ * ("unknown tool '<name>' (no such tool in the catalogue ...").
+ * A permission denial ("tool '<name>' requires permission ...") shares the
+ * `forbidden` code but must NOT match.
+ */
+export function isUnknownToolError(err: unknown): boolean {
+  return err instanceof Error && err.message.startsWith("unknown tool '");
+}
+
 export class SuiteClient {
   private socket: Socket | null = null;
   private channel: any = null;
@@ -210,8 +242,40 @@ export class SuiteClient {
 
   /**
    * Call a Suite tool over the WebSocket and wait for the result.
+   *
+   * Wire-name negotiation (Burrow migration, task 01a14a7d). Core resolves
+   * `tool_call` names by EXACT string membership, and its catalogue is moving
+   * from dotted names (`skill.list`) to underscore names (`skill_list`), with
+   * the dotted form kept only as a hidden alias on new servers. Old servers
+   * know only the dotted form. So:
+   *
+   *   - the underscore form is always sent first (`.` -> `_`);
+   *   - if the name has a dotted twin (it was passed dotted, or it is listed
+   *     in DOTTED_TWINS) and the server rejects the first attempt as an
+   *     UNKNOWN tool, the dotted twin is tried exactly once, and its outcome
+   *     (success or error) is returned unchanged;
+   *   - any other failure (permission denied, timeout, handler error) is
+   *     surfaced as-is with no retry.
+   *
+   * The trigger is the error MESSAGE, not the code: core replies
+   * `code: "forbidden"` both for an unknown name and for a known tool the
+   * runtime is not granted, and only the message tells them apart.
    */
-  callTool(tool: string, args: Record<string, unknown>): Promise<unknown> {
+  async callTool(tool: string, args: Record<string, unknown>): Promise<unknown> {
+    const primary = underscoreToolName(tool);
+    const fallback = dottedTwin(tool);
+
+    try {
+      return await this.pushToolCall(primary, args);
+    } catch (err) {
+      if (fallback && fallback !== primary && isUnknownToolError(err)) {
+        return this.pushToolCall(fallback, args);
+      }
+      throw err;
+    }
+  }
+
+  private pushToolCall(tool: string, args: Record<string, unknown>): Promise<unknown> {
     const callId = `tc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
     return new Promise((resolve, reject) => {
@@ -406,12 +470,14 @@ export class SuiteClient {
         "suite_org_context_list",
         "suite_org_memory_append",
         "suite_org_memory_search",
-        // Skill registry — Suite advertises dotted names (`skill.list`, etc.)
-        // but the plugin exposes underscored aliases (suite_skill_*, skill_*)
-        // because OpenClaw tool callers prefer underscores. Include both forms
-        // here so (a) the tool-contract check matches plugin agentTools names
-        // and (b) the available-vs-registered diff against Suite's manifest
-        // does not warn on the dotted advertisement.
+        // Skill registry — old Suite servers advertise dotted names
+        // (`skill.list`, etc.); new servers advertise underscore names and
+        // keep the dotted ones as hidden aliases. The plugin exposes
+        // underscored tools (suite_skill_*, skill_*) and callTool sends the
+        // underscore wire name first, falling back to dotted. Include both
+        // forms here so (a) the tool-contract check matches plugin agentTools
+        // names and (b) the available-vs-registered diff stays quiet against
+        // old and new servers alike.
         "suite_skill_list",
         "skill_list",
         "suite_skill_get",
@@ -421,9 +487,10 @@ export class SuiteClient {
         "skill.list",
         "skill.get",
         "skill.upsert",
-        // Epic registry — Suite advertises `epic.create` over the wire; the
-        // plugin exposes both `suite_epic_create` and the unprefixed
-        // `epic_create` alias for legacy WS-channel agents (task 019d60ca).
+        // Epic registry — current Suite registers `epic_create`; `epic.create`
+        // is kept for older servers. The plugin exposes both
+        // `suite_epic_create` and the unprefixed `epic_create` alias for
+        // legacy WS-channel agents (task 019d60ca).
         "suite_epic_create",
         "epic_create",
         "epic.create",
