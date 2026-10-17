@@ -1,5 +1,5 @@
 {
-  "url": "wss://suite.milvenan.technology/runtime/ws",
+  "url": "wss://burrow.example.com/runtime/ws",
   "runtimeId": "",
   "token": "",
   "autoJoinSpaces": [],

@@ -41,7 +41,7 @@ usage() {
   echo "  ./install.sh --account-id sage   --runtime-id sage-id   --token sage-token"
   echo ""
   echo "Route to an existing agent (e.g. same agent across channels):"
-  echo "  ./install.sh --account-id kobo-suite --agent-id kobo --runtime-id id --token tok"
+  echo "  ./install.sh --account-id my-burrow --agent-id my-agent --runtime-id id --token tok"
   exit 0
 }
 

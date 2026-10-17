@@ -4,7 +4,9 @@ Burrow is the new name of Startup Suite. The identifiers OpenClaw config and
 tooling key on are unchanged in this release: the channel id `startup-suite`,
 the plugin and npm package id `startup-suite-channel-plugin`, the extension
 directory `~/.openclaw/extensions/startup-suite-channel`, and every `suite_*`
-tool name. An existing `openclaw.json` keeps working without edits.
+tool name. An existing `openclaw.json` keeps working without edits. The
+repository is `burrow-channel-openclaw` (formerly `openclaw-suite-channel`;
+GitHub redirects the old URL).
 
 Connect your OpenClaw agent to a Burrow deployment as a federated runtime. Your agent participates in Burrow spaces — receiving messages, responding through the OpenClaw channel pipeline, and calling Burrow tools (canvas, tasks, plans). The connection is outbound-only, so OpenClaw can run behind NAT without port forwarding.
 
@@ -34,8 +36,8 @@ First, register a runtime in Burrow: **Agent Resources → Add Agent → Federat
 ### Interactive (recommended)
 
 ```bash
-git clone <this repository's URL> openclaw-suite-channel
-cd openclaw-suite-channel
+git clone <this repository's URL> burrow-channel-openclaw
+cd burrow-channel-openclaw
 bash install.sh
 ```
 
@@ -126,7 +128,7 @@ The installer writes a `config.json` for the default account. No `openclaw.json`
 
 ```json
 {
-  "url": "wss://suite.milvenan.technology/runtime/ws",
+  "url": "wss://burrow.example.com/runtime/ws",
   "runtimeId": "my-agent-runtime-id",
   "token": "my-token",
   "autoJoinSpaces": [],
@@ -147,12 +149,12 @@ Add the following to your `~/.openclaw/openclaw.json`:
     "startup-suite": {
       "accounts": {
         "beacon": {
-          "url": "wss://suite.milvenan.technology/runtime/ws",
+          "url": "wss://burrow.example.com/runtime/ws",
           "runtimeId": "beacon-runtime-uuid",
           "token": "beacon-token"
         },
         "sage": {
-          "url": "wss://suite.milvenan.technology/runtime/ws",
+          "url": "wss://burrow.example.com/runtime/ws",
           "runtimeId": "sage-runtime-uuid",
           "token": "sage-token"
         }
@@ -284,7 +286,7 @@ The plan engine advances stages automatically when all validations on a stage re
 ## Uninstall
 
 ```bash
-cd openclaw-suite-channel
+cd burrow-channel-openclaw
 bash uninstall.sh
 openclaw gateway restart
 ```
