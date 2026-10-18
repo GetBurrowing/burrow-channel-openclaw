@@ -2,8 +2,12 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/env-fallbacks.sh
+. "$SCRIPT_DIR/scripts/env-fallbacks.sh"
 # Override for testing the install path against a scratch directory.
-EXT_DIR="${SUITE_CHANNEL_EXT_DIR:-$HOME/.openclaw/extensions/startup-suite-channel}"
+# BURROW_CHANNEL_EXT_DIR first; SUITE_CHANNEL_EXT_DIR still works (deprecated).
+burrow_env BURROW_CHANNEL_EXT_DIR
+EXT_DIR="${BURROW_ENV_VALUE:-$HOME/.openclaw/extensions/startup-suite-channel}"
 
 if [ ! -d "$EXT_DIR" ]; then
   echo "Error: Plugin not installed at $EXT_DIR"
@@ -11,7 +15,7 @@ if [ ! -d "$EXT_DIR" ]; then
   exit 1
 fi
 
-echo "Updating Startup Suite Channel plugin..."
+echo "Updating Burrow Channel plugin for OpenClaw..."
 
 # ── 1. Copy plugin files (preserves existing config.json) ─────────
 mkdir -p "$EXT_DIR/src"

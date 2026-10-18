@@ -72,8 +72,8 @@ function taskPhaseGuidance(
 
 export default defineChannelPluginEntry({
   id: "startup-suite-channel-plugin",
-  name: "Startup Suite Channel",
-  description: "Connect OpenClaw to a Startup Suite deployment as a federated runtime",
+  name: "Burrow Channel",
+  description: "Connect OpenClaw to a Burrow deployment as a federated runtime",
   plugin: suitePlugin,
   setRuntime: setSuiteRuntime,
   registerFull(api) {

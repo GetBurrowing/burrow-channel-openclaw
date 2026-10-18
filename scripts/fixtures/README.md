@@ -60,3 +60,21 @@ envelope that used to throw `TypeError: Cannot read properties of undefined
 On this shape the handler must not throw, must substitute its own
 `System dispatch: system_event` placeholder body, and must still deliver
 `responsibility_key` to the agent.
+
+## `openclaw-v0.7.0.json` and `config-v0.7.0.json`
+
+Also captures, not constructions: the files **v0.7.0's own `install.sh`**
+(b220c8b1) wrote into a scratch dir, run with `SUITE_CHANNEL_EXT_DIR` /
+`SUITE_CHANNEL_OC_CONFIG` pointing there, `npm` stubbed out, and `n` to the
+connection-test prompt. It ran four times: `--account-id beacon`, `builder`,
+`pixel` (the multi-account shape a gateway with several agents has), then once
+with no account id, which writes the single-agent `config.json`. Runtime ids
+(`rt-<account>-0700`), the URL (`wss://core.example.test/runtime/ws`) and the
+literal tokens (`fixture-literal-token-<account>`) are placeholders passed on
+the command line; none is a real credential.
+
+`scripts/check-old-config.mjs` uses them as the UNTOUCHED config of a v0.7.0
+host: it runs this checkout's `update.sh` over them and checks that they stay
+byte-equal, still validate against the new manifest, and still resolve and
+join. Do not edit them to match a new shape; if the shape v0.7.0 wrote stops
+working, that is the regression the check exists to catch.

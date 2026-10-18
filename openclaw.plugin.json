@@ -2,15 +2,15 @@
   "id": "startup-suite-channel-plugin",
   "kind": "channel",
   "channels": ["startup-suite"],
-  "name": "Startup Suite Channel",
-  "description": "Connect to a Startup Suite deployment as a federated agent runtime",
+  "name": "Burrow Channel",
+  "description": "Connect to a Burrow deployment as a federated agent runtime",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
     "properties": {
       "startup-suite": {
         "type": "object",
-        "description": "Multi-account Startup Suite channel config",
+        "description": "Multi-account Burrow channel config",
         "properties": {
           "accounts": {
             "type": "object",
@@ -21,12 +21,12 @@
               "properties": {
                 "url": {
                   "type": "string",
-                  "description": "Suite WebSocket endpoint URL",
+                  "description": "Burrow WebSocket endpoint URL",
                   "default": "wss://suite.milvenan.technology/runtime/ws"
                 },
                 "runtimeId": {
                   "type": "string",
-                  "description": "Registered runtime ID from Suite"
+                  "description": "Registered runtime ID from Burrow"
                 },
                 "token": {
                   "type": "string",
@@ -54,7 +54,7 @@
                 },
                 "useMcpTools": {
                   "type": "boolean",
-                  "description": "Skip the channel-era `suite_*` tool-name hints in agent prompts and emit MCP-compatible guidance instead. Enable this once the agent is wired to Suite's /mcp endpoint for tool execution (ADR 0034).",
+                  "description": "Skip the channel-era `suite_*` tool-name hints in agent prompts and emit MCP-compatible guidance instead. Enable this once the agent is wired to Burrow's /mcp endpoint for tool execution (ADR 0034).",
                   "default": false
                 }
               }
@@ -66,12 +66,12 @@
   },
   "channelConfigs": {
     "startup-suite": {
-      "label": "Startup Suite",
-      "blurb": "Connect to a Startup Suite deployment as a federated agent runtime",
+      "label": "Burrow",
+      "blurb": "Connect to a Burrow deployment as a federated agent runtime",
       "schema": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
-        "description": "Multi-account Startup Suite channel config",
+        "description": "Multi-account Burrow channel config",
         "properties": {
           "accounts": {
             "type": "object",
@@ -82,12 +82,12 @@
               "properties": {
                 "url": {
                   "type": "string",
-                  "description": "Suite WebSocket endpoint URL",
+                  "description": "Burrow WebSocket endpoint URL",
                   "default": "wss://suite.milvenan.technology/runtime/ws"
                 },
                 "runtimeId": {
                   "type": "string",
-                  "description": "Registered runtime ID from Suite"
+                  "description": "Registered runtime ID from Burrow"
                 },
                 "token": {
                   "type": "string",
@@ -115,7 +115,7 @@
                 },
                 "useMcpTools": {
                   "type": "boolean",
-                  "description": "Skip the channel-era `suite_*` tool-name hints in agent prompts and emit MCP-compatible guidance instead. Enable this once the agent is wired to Suite's /mcp endpoint for tool execution (ADR 0034).",
+                  "description": "Skip the channel-era `suite_*` tool-name hints in agent prompts and emit MCP-compatible guidance instead. Enable this once the agent is wired to Burrow's /mcp endpoint for tool execution (ADR 0034).",
                   "default": false
                 }
               }

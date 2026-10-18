@@ -39,10 +39,10 @@ export const suitePlugin: ChannelPlugin = {
 
   meta: {
     id: CHANNEL_ID,
-    label: "Startup Suite",
-    selectionLabel: "Startup Suite",
+    label: "Burrow",
+    selectionLabel: "Burrow",
     docsPath: "/plugins/developing-plugins",
-    blurb: "Federated agent runtime via Startup Suite",
+    blurb: "Federated agent runtime via Burrow",
   },
 
   capabilities: {
@@ -746,11 +746,11 @@ export const suitePlugin: ChannelPlugin = {
         error: (message: string) => log?.error?.(message),
       };
 
-      runtime.log(`startup-suite(${accountId}): startAccount invoked`);
+      runtime.log(`burrow(${accountId}): startAccount invoked`);
       const suiteConfig = resolveAccountConfig(cfg, accountId);
 
       if (!suiteConfig) {
-        runtime.error(`startup-suite(${accountId}): missing configuration`);
+        runtime.error(`burrow(${accountId}): missing configuration`);
         throw new Error(`startup-suite: missing configuration for account ${accountId}`);
       }
 
@@ -784,13 +784,13 @@ export const suitePlugin: ChannelPlugin = {
         },
 
         onDisconnect() {
-          runtime.log(`startup-suite(${accountId}): connection lost, reconnecting...`);
+          runtime.log(`burrow(${accountId}): connection lost, reconnecting...`);
         },
       });
 
       setClient(accountId, client);
       client.connect();
-      runtime.log(`startup-suite(${accountId}): connected as runtime ${suiteConfig.runtimeId}`);
+      runtime.log(`burrow(${accountId}): connected as runtime ${suiteConfig.runtimeId}`);
 
       await new Promise<void>((resolve) => {
         if (ctx.abortSignal.aborted) {

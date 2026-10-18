@@ -1,11 +1,19 @@
-# Startup Suite Channel Plugin for OpenClaw
+# Burrow Channel Plugin for OpenClaw
 
-Connect your OpenClaw agent to a Startup Suite deployment as a federated runtime. Your agent participates in Suite spaces — receiving messages, responding through the OpenClaw channel pipeline, and calling Suite tools (canvas, tasks, plans). The connection is outbound-only, so OpenClaw can run behind NAT without port forwarding.
+Burrow is the new name of Startup Suite. The identifiers OpenClaw config and
+tooling key on are unchanged in this release: the channel id `startup-suite`,
+the plugin and npm package id `startup-suite-channel-plugin`, the extension
+directory `~/.openclaw/extensions/startup-suite-channel`, and every `suite_*`
+tool name. An existing `openclaw.json` keeps working without edits. The
+repository is `burrow-channel-openclaw` (formerly `openclaw-suite-channel`;
+GitHub redirects the old URL).
+
+Connect your OpenClaw agent to a Burrow deployment as a federated runtime. Your agent participates in Burrow spaces — receiving messages, responding through the OpenClaw channel pipeline, and calling Burrow tools (canvas, tasks, plans). The connection is outbound-only, so OpenClaw can run behind NAT without port forwarding.
 
 ## Architecture
 
 ```
-Your OpenClaw (behind NAT) ──outbound WSS──► Startup Suite (public)
+Your OpenClaw (behind NAT) ──outbound WSS──► Burrow (public)
                                                   │
                               ◄── attention signals + context ──┘
                               ──► agent replies ────────────────►
@@ -13,23 +21,23 @@ Your OpenClaw (behind NAT) ──outbound WSS──► Startup Suite (public)
                               ──► tool calls ───────────────────►
 ```
 
-After connecting, the plugin joins a Phoenix channel (`runtime:<id>`) and listens for **attention** events. Each event includes the triggering message, conversation history, space context (canvases, tasks, participants), and available tools. The message bridge translates this into an OpenClaw agent session, and replies flow back to Suite.
+After connecting, the plugin joins a Phoenix channel (`runtime:<id>`) and listens for **attention** events. Each event includes the triggering message, conversation history, space context (canvases, tasks, participants), and available tools. The message bridge translates this into an OpenClaw agent session, and replies flow back to Burrow.
 
 ## Prerequisites
 
 - OpenClaw 2026.2.0+ installed and running
-- A Startup Suite deployment with a registered runtime (get this from Suite's **Agent Resources → Federate**)
+- A Burrow deployment with a registered runtime (get this from Burrow's **Agent Resources → Federate**)
 - Node.js 18+
 
 ## Installation
 
-First, register a runtime in Suite: **Agent Resources → Add Agent → Federate**. Copy the runtime ID and token.
+First, register a runtime in Burrow: **Agent Resources → Add Agent → Federate**. Copy the runtime ID and token.
 
 ### Interactive (recommended)
 
 ```bash
-git clone <this repository's URL> openclaw-suite-channel
-cd openclaw-suite-channel
+git clone <this repository's URL> burrow-channel-openclaw
+cd burrow-channel-openclaw
 bash install.sh
 ```
 
@@ -41,7 +49,7 @@ The script will prompt for your runtime ID and token, then handle everything: fi
 bash install.sh --runtime-id my-runtime --token abc123def456
 ```
 
-With a custom Suite URL:
+With a custom Burrow URL:
 
 ```bash
 bash install.sh \
@@ -87,12 +95,28 @@ started (never the connection time). The installed copy has no `.git`, so
 into `build-info.json` next to the code with `scripts/write-build-info.mjs`;
 the plugin reads it once when it loads. A reconnect therefore re-sends the
 resident code's identity, while a restart after `update.sh` sends the new one.
-Suite's `federation_status` shows it as `client_build`. `version` is
+Burrow's `federation_status` shows it as `client_build`. `version` is
 `package.json`'s string, kept for humans only and never used as the build. If
 the stamp is missing or invalid, `build` is omitted and
 `client_info.build_error` says why; the plugin never guesses. To exercise the
-install path without touching a live install, set `SUITE_CHANNEL_EXT_DIR`
-(and, for `install.sh`, `SUITE_CHANNEL_OC_CONFIG`) to scratch paths.
+install path without touching a live install, set `BURROW_CHANNEL_EXT_DIR`
+(and, for `install.sh`, `BURROW_CHANNEL_OC_CONFIG`) to scratch paths.
+
+### Environment variables
+
+The scripts read the `BURROW_` spelling first. The pre-rename `SUITE_`
+spelling still works, but is deprecated: when it is the one used, the script
+prints one line to stderr naming the new spelling.
+
+| Variable | Deprecated fallback | Read by | Meaning |
+|---|---|---|---|
+| `BURROW_CHANNEL_EXT_DIR` | `SUITE_CHANNEL_EXT_DIR` | `install.sh`, `update.sh` | Extension dir to install into (default `~/.openclaw/extensions/startup-suite-channel`) |
+| `BURROW_CHANNEL_OC_CONFIG` | `SUITE_CHANNEL_OC_CONFIG` | `install.sh` | `openclaw.json` to write (default `~/.openclaw/openclaw.json`) |
+| `BURROW_ACCOUNT_ID` | `SUITE_ACCOUNT_ID` | `scripts/test-connection.sh`, `scripts/test-connection.js` | Account to test when no argument is given |
+
+When both spellings are set, the `BURROW_` value wins and nothing is
+printed. The plugin itself reads no environment variables; its config lives
+in `openclaw.json` and `config.json`.
 
 ---
 
@@ -104,7 +128,7 @@ The installer writes a `config.json` for the default account. No `openclaw.json`
 
 ```json
 {
-  "url": "wss://suite.milvenan.technology/runtime/ws",
+  "url": "wss://burrow.example.com/runtime/ws",
   "runtimeId": "my-agent-runtime-id",
   "token": "my-token",
   "autoJoinSpaces": [],
@@ -125,12 +149,12 @@ Add the following to your `~/.openclaw/openclaw.json`:
     "startup-suite": {
       "accounts": {
         "beacon": {
-          "url": "wss://suite.milvenan.technology/runtime/ws",
+          "url": "wss://burrow.example.com/runtime/ws",
           "runtimeId": "beacon-runtime-uuid",
           "token": "beacon-token"
         },
         "sage": {
-          "url": "wss://suite.milvenan.technology/runtime/ws",
+          "url": "wss://burrow.example.com/runtime/ws",
           "runtimeId": "sage-runtime-uuid",
           "token": "sage-token"
         }
@@ -157,7 +181,7 @@ Add `bindings` entries in `openclaw.json` to point each account at a specific Op
 }
 ```
 
-**Gotcha 2: Per-Suite-agent routing** — if several Suite-side agents share one runtime account and you want each routed to a different OpenClaw agent, use peer-matched bindings on the Suite `agent_slug` (available in the attention signal on Suite versions with agent identity packed in — ADR 0034 era). List peer-matched bindings **before** the channel-wildcard fallback:
+**Gotcha 2: Per-Burrow-agent routing** — if several Burrow-side agents share one runtime account and you want each routed to a different OpenClaw agent, use peer-matched bindings on the Burrow `agent_slug` (available in the attention signal on server versions with agent identity packed in — ADR 0034 era). List peer-matched bindings **before** the channel-wildcard fallback:
 
 ```json
 {
@@ -169,24 +193,24 @@ Add `bindings` entries in `openclaw.json` to point each account at a specific Op
 }
 ```
 
-When a Suite agent appears in multiple spaces (chat rooms), the plugin automatically appends the space id to the session key so each room keeps its own conversation history — no cross-space context bleed.
+When a Burrow agent appears in multiple spaces (chat rooms), the plugin automatically appends the space id to the session key so each room keeps its own conversation history — no cross-space context bleed.
 
 ### Configuration reference
 
 | Field | Description | Default |
 |---|---|---|
-| `url` | Suite WebSocket endpoint | `wss://suite.milvenan.technology/runtime/ws` |
+| `url` | Burrow WebSocket endpoint | `wss://suite.milvenan.technology/runtime/ws` |
 | `runtimeId` | Your registered runtime ID | *(required)* |
 | `token` | Runtime token **reference**: `file:<absolute path>` (a regular file owned by the gateway user, mode `0600` or `0400`) or `keychain:<item>` (macOS login keychain, read with `/usr/bin/security find-generic-password -s <tokenKeychainService> -a <item> -w`). Any other value is a literal token: still accepted, deprecated, warned about once per account. An unresolvable ref leaves the account unconfigured and logs one line naming the path or item, never the value. | *(required)* |
 | `tokenKeychainService` | Keychain service for a `keychain:<item>` ref. Required with keychain refs. | — |
 | `autoJoinSpaces` | Space IDs to auto-join on connect | `[]` |
 | `reconnectIntervalMs` | Initial reconnect delay (ms) | `5000` |
 | `maxReconnectIntervalMs` | Max reconnect delay (ms) | `60000` |
-| `useMcpTools` | Skip the channel-era `suite_*` tool-name hints in agent prompts and emit MCP-compatible guidance instead. Enable once the agent consumes Suite tools via the `/mcp` endpoint (ADR 0034). | `false` |
+| `useMcpTools` | Skip the channel-era `suite_*` tool-name hints in agent prompts and emit MCP-compatible guidance instead. Enable once the agent consumes Burrow tools via the `/mcp` endpoint (ADR 0034). | `false` |
 
 ---
 
-## Suite Tools
+## Burrow Tools
 
 The plugin registers these tools for the agent:
 
@@ -194,8 +218,8 @@ The plugin registers these tools for the agent:
 
 | Tool | Description |
 |---|---|
-| `suite_canvas_create` | Create a collaborative canvas (table, code, diagram, dashboard) in a Suite space |
-| `suite_send_media` | Send a message with file attachments into a Suite space |
+| `suite_canvas_create` | Create a collaborative canvas (table, code, diagram, dashboard) in a Burrow space |
+| `suite_send_media` | Send a message with file attachments into a Burrow space |
 
 ### Tasks
 
@@ -252,9 +276,9 @@ The plan engine advances stages automatically when all validations on a stage re
 ## Security
 
 - All connections are **outbound** from OpenClaw (NAT-safe, no port forwarding needed)
-- The runtime token authenticates the WebSocket connection to Suite
-- Suite handles user authentication via OIDC
-- Messages only route from authenticated Suite users in spaces the agent has joined
+- The runtime token authenticates the WebSocket connection to Burrow
+- Burrow handles user authentication via OIDC
+- Messages only route from authenticated Burrow users in spaces the agent has joined
 - `token` values are sensitive — treat them like API keys; do not commit to source control. Prefer a `file:` or `keychain:` ref so `openclaw.json` holds no secret
 
 ---
@@ -262,7 +286,7 @@ The plan engine advances stages automatically when all validations on a stage re
 ## Uninstall
 
 ```bash
-cd openclaw-suite-channel
+cd burrow-channel-openclaw
 bash uninstall.sh
 openclaw gateway restart
 ```
@@ -274,16 +298,16 @@ This removes the extension directory and cleans up `openclaw.json`.
 ## Troubleshooting
 
 **Connection refused**
-- Check that Suite is running and the URL is correct
+- Check that Burrow is running and the URL is correct
 - Verify the `/runtime/ws` endpoint is reachable from your network
 
 **Auth failed**
-- Verify `runtimeId` and `token` match what Suite generated
-- The token may have expired — re-register with Suite if needed
+- Verify `runtimeId` and `token` match what Burrow generated
+- The token may have expired — re-register with Burrow if needed
 
 **No responses**
 - Check OpenClaw gateway logs: `openclaw gateway logs`
-- Ensure the runtime is associated with at least one Suite space
+- Ensure the runtime is associated with at least one Burrow space
 
 **Duplicate tool registration errors (multi-agent setup)**
 - Do not run multiple plugin instances — use the multi-account config in `openclaw.json` instead (see above)

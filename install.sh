@@ -2,12 +2,19 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/env-fallbacks.sh
+. "$SCRIPT_DIR/scripts/env-fallbacks.sh"
 # Override for testing the install path against a scratch directory.
-EXT_DIR="${SUITE_CHANNEL_EXT_DIR:-$HOME/.openclaw/extensions/startup-suite-channel}"
-OC_CONFIG="${SUITE_CHANNEL_OC_CONFIG:-$HOME/.openclaw/openclaw.json}"
+# BURROW_CHANNEL_* first; the SUITE_CHANNEL_* spelling still works (deprecated).
+# The extension dir keeps its startup-suite-channel name: OpenClaw config and
+# suite-cli locate the installed plugin by it.
+burrow_env BURROW_CHANNEL_EXT_DIR
+EXT_DIR="${BURROW_ENV_VALUE:-$HOME/.openclaw/extensions/startup-suite-channel}"
+burrow_env BURROW_CHANNEL_OC_CONFIG
+OC_CONFIG="${BURROW_ENV_VALUE:-$HOME/.openclaw/openclaw.json}"
 
 # ── Parse arguments ────────────────────────────────────────────────
-SUITE_URL=""
+WS_URL=""
 RUNTIME_ID=""
 TOKEN=""
 ACCOUNT_ID=""   # optional named account (for multi-agent setups)
@@ -17,9 +24,9 @@ usage() {
   echo "Usage: install.sh [OPTIONS]"
   echo ""
   echo "Options:"
-  echo "  --url URL            Suite WebSocket URL (default: wss://suite.milvenan.technology/runtime/ws)"
-  echo "  --runtime-id ID      Runtime ID from Suite federate flow"
-  echo "  --token TOKEN        Authentication token from Suite federate flow"
+  echo "  --url URL            Burrow WebSocket URL (default: wss://suite.milvenan.technology/runtime/ws)"
+  echo "  --runtime-id ID      Runtime ID from the Burrow federate flow"
+  echo "  --token TOKEN        Authentication token from the Burrow federate flow"
   echo "  --account-id NAME    Named account for multi-agent setups (e.g. 'beacon', 'sage')"
   echo "                       Omit for single-agent installs (uses config.json default)"
   echo "  --agent-id NAME      OpenClaw agent to route messages to (defaults to account-id)"
@@ -34,13 +41,13 @@ usage() {
   echo "  ./install.sh --account-id sage   --runtime-id sage-id   --token sage-token"
   echo ""
   echo "Route to an existing agent (e.g. same agent across channels):"
-  echo "  ./install.sh --account-id kobo-suite --agent-id kobo --runtime-id id --token tok"
+  echo "  ./install.sh --account-id my-burrow --agent-id my-agent --runtime-id id --token tok"
   exit 0
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --url) SUITE_URL="$2"; shift 2 ;;
+    --url) WS_URL="$2"; shift 2 ;;
     --runtime-id) RUNTIME_ID="$2"; shift 2 ;;
     --token) TOKEN="$2"; shift 2 ;;
     --account-id) ACCOUNT_ID="$2"; shift 2 ;;
@@ -52,18 +59,18 @@ done
 
 # ── Interactive prompts if values not provided ─────────────────────
 if [ -z "$RUNTIME_ID" ] || [ -z "$TOKEN" ]; then
-  echo "Startup Suite Channel — Plugin Installer"
-  echo "========================================="
+  echo "Burrow Channel for OpenClaw — Plugin Installer"
+  echo "=============================================="
   echo ""
-  echo "You'll need a runtime ID and token from Suite."
+  echo "You'll need a runtime ID and token from Burrow."
   echo "Get these from: Agent Resources → Add Agent → Federate"
   echo ""
   echo "For multiple agents on one gateway, run this script once per agent"
   echo "with --account-id <name> to add named accounts to openclaw.json."
   echo ""
 
-  if [ -z "$SUITE_URL" ]; then
-    read -rp "Suite URL [wss://suite.milvenan.technology/runtime/ws]: " SUITE_URL
+  if [ -z "$WS_URL" ]; then
+    read -rp "Burrow URL [wss://suite.milvenan.technology/runtime/ws]: " WS_URL
   fi
 
   if [ -z "$RUNTIME_ID" ]; then
@@ -99,10 +106,10 @@ if [ -z "$RUNTIME_ID" ] || [ -z "$TOKEN" ]; then
   echo ""
 fi
 
-SUITE_URL="${SUITE_URL:-wss://suite.milvenan.technology/runtime/ws}"
+WS_URL="${WS_URL:-wss://suite.milvenan.technology/runtime/ws}"
 AGENT_ID="${AGENT_ID:-$ACCOUNT_ID}"
 
-echo "Installing Startup Suite Channel plugin..."
+echo "Installing Burrow Channel plugin for OpenClaw..."
 echo ""
 
 # ── 1. Copy files ──────────────────────────────────────────────────
@@ -141,7 +148,7 @@ echo "  ✓ Installed npm dependencies"
 # Multi-agent: write named account into openclaw.json accounts map
 
 configure_with_python() {
-  python3 - "$OC_CONFIG" "$SUITE_URL" "$RUNTIME_ID" "$TOKEN" "$ACCOUNT_ID" "$AGENT_ID" <<'PYEOF'
+  python3 - "$OC_CONFIG" "$WS_URL" "$RUNTIME_ID" "$TOKEN" "$ACCOUNT_ID" "$AGENT_ID" <<'PYEOF'
 import json, sys
 
 path, url, runtime_id, token, account_id, agent_id = sys.argv[1:7]
@@ -226,7 +233,7 @@ else
   # Single-agent: write config.json + register channel/plugin in openclaw.json
   cat > "$EXT_DIR/config.json" <<CONFIGEOF
 {
-  "url": "$SUITE_URL",
+  "url": "$WS_URL",
   "runtimeId": "$RUNTIME_ID",
   "token": "$TOKEN",
   "autoJoinSpaces": [],
