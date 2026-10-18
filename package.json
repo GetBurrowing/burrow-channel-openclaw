@@ -1,6 +1,6 @@
 {
   "name": "startup-suite-channel-plugin",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/Startup-Suite/burrow-channel-openclaw.git"
@@ -25,7 +25,8 @@
     "test:tool-name-fallback": "node scripts/check-tool-name-fallback.mjs",
     "test:env-fallback": "node scripts/check-env-fallback.mjs",
     "test:old-config": "node scripts/check-old-config.mjs",
-    "test": "npm run test:tool-contract && npm run test:client-info-handshake && npm run test:epic-create-tool && npm run test:space-resolution && npm run test:inbound-space-binding && npm run test:system-event-body && npm run test:signal-correlation-ids && npm run test:system-event-envelope && npm run test:reply-in-reply-to && npm run test:token-ref && npm run test:build-info && npm run test:tool-name-fallback && npm run test:env-fallback && npm run test:old-config"
+    "test:product-name": "node scripts/check-product-name.mjs",
+    "test": "npm run test:product-name && npm run test:tool-contract && npm run test:client-info-handshake && npm run test:epic-create-tool && npm run test:space-resolution && npm run test:inbound-space-binding && npm run test:system-event-body && npm run test:signal-correlation-ids && npm run test:system-event-envelope && npm run test:reply-in-reply-to && npm run test:token-ref && npm run test:build-info && npm run test:tool-name-fallback && npm run test:env-fallback && npm run test:old-config"
   },
   "openclaw": {
     "extensions": [

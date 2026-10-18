@@ -16,7 +16,7 @@ import {
 const Type: any = RawType;
 const CHANNEL_ID = "startup-suite";
 
-// ── Suite tool helpers ──────────────────────────────────────────────
+// ── Burrow tool helpers ──────────────────────────────────────────────
 
 function suiteToolExecute(toolName: string) {
   return async (toolCallId: string, params: unknown) => {
@@ -27,7 +27,7 @@ function suiteToolExecute(toolName: string) {
 
     const typedParams = params as Record<string, unknown>;
     const c = clientForTool(typedParams);
-    if (!c) throw new Error("Suite client is not connected");
+    if (!c) throw new Error("Burrow client is not connected");
 
     const result = await c.callTool(toolName, typedParams);
     return { content: [{ type: "text" as const, text: JSON.stringify(result) }], details: result };
@@ -85,7 +85,7 @@ export const suitePlugin: ChannelPlugin = {
 
   // Channel-era tools are registered here, but suppressed at plugin load when
   // every configured startup-suite account has `useMcpTools: true` — i.e. the
-  // operator has fully cut over to Suite's `/mcp` endpoint for tool execution
+  // operator has fully cut over to Burrow's `/mcp` endpoint for tool execution
   // (ADR 0034). Mixed or legacy configs keep the channel tools so existing
   // installs don't silently lose functionality during migration.
   agentTools: ({ cfg }: { cfg?: any }) => {
@@ -97,11 +97,11 @@ export const suitePlugin: ChannelPlugin = {
     return [
     {
       name: "suite_canvas_create",
-      label: "Create Suite Canvas",
+      label: "Create Burrow Canvas",
       description:
-        "Create a live collaborative canvas in a Startup Suite space. Use when the conversation calls for a shared visual artifact like a table, diagram, dashboard, or code block.",
+        "Create a live collaborative canvas in a Burrow space. Use when the conversation calls for a shared visual artifact like a table, diagram, dashboard, or code block.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space (from the conversation context)" }),
+        space_id: Type.String({ description: "UUID of the Burrow space (from the conversation context)" }),
         canvas_type: Type.Union(
           [Type.Literal("table"), Type.Literal("dashboard"), Type.Literal("code"), Type.Literal("diagram"), Type.Literal("custom")],
           { description: "Type of canvas to create" },
@@ -113,11 +113,11 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_canvas_update",
-      label: "Update Suite Canvas",
+      label: "Update Burrow Canvas",
       description:
-        "Update an existing canvas in a Startup Suite space. Use to modify the content, title, or state of a canvas that was previously created.",
+        "Update an existing canvas in a Burrow space. Use to modify the content, title, or state of a canvas that was previously created.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         canvas_id: Type.String({ description: "UUID of the canvas to update" }),
         updates: Type.Record(Type.String(), Type.Unknown(), { description: "Fields to update on the canvas (e.g. title, state)" }),
       }),
@@ -125,11 +125,11 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_task_create",
-      label: "Create Suite Task",
+      label: "Create Burrow Task",
       description:
-        "Create a task in a Startup Suite space. Use when the user requests a tracked to-do, action item, or work item.",
+        "Create a task in a Burrow space. Use when the user requests a tracked to-do, action item, or work item.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         project_id: Type.String({ description: "The project to create the task in" }),
         title: Type.String({ description: "Title / summary of the task" }),
         description: Type.Optional(Type.String({ description: "Longer description or acceptance criteria" })),
@@ -143,22 +143,22 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_task_complete",
-      label: "Complete Suite Task",
+      label: "Complete Burrow Task",
       description:
-        "Mark an existing task as done in a Startup Suite space.",
+        "Mark an existing task as done in a Burrow space.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         task_id: Type.String({ description: "UUID of the task to mark complete" }),
       }),
       execute: suiteToolExecute("task_complete"),
     },
     {
       name: "suite_send_media",
-      label: "Send Media to Suite Space",
+      label: "Send Media to Burrow Space",
       description:
-        "Send a message with file attachments (images, documents) into a Startup Suite space.",
+        "Send a message with file attachments (images, documents) into a Burrow space.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         file_paths: Type.Array(Type.String(), { description: "Local file paths to attach" }),
         content: Type.Optional(Type.String({ description: "Message text (markdown supported)" })),
       }),
@@ -166,15 +166,15 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_project_list",
-      label: "List Suite Projects",
-      description: "List all projects in Startup Suite.",
+      label: "List Burrow Projects",
+      description: "List all projects in Burrow.",
       parameters: Type.Object({}),
       execute: suiteToolExecute("project_list"),
     },
     {
       name: "suite_epic_list",
-      label: "List Suite Epics",
-      description: "List epics in Startup Suite, optionally filtered by project.",
+      label: "List Burrow Epics",
+      description: "List epics in Burrow, optionally filtered by project.",
       parameters: Type.Object({
         project_id: Type.Optional(Type.String({ description: "Filter by project ID" })),
       }),
@@ -182,8 +182,8 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_task_get",
-      label: "Get Suite Task",
-      description: "Get a task by ID from Startup Suite.",
+      label: "Get Burrow Task",
+      description: "Get a task by ID from Burrow.",
       parameters: Type.Object({
         task_id: Type.String({ description: "Task ID" }),
       }),
@@ -191,8 +191,8 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_task_list",
-      label: "List Suite Tasks",
-      description: "List tasks in Startup Suite with optional filters.",
+      label: "List Burrow Tasks",
+      description: "List tasks in Burrow with optional filters.",
       parameters: Type.Object({
         project_id: Type.Optional(Type.String({ description: "Filter by project ID" })),
         epic_id: Type.Optional(Type.String({ description: "Filter by epic ID" })),
@@ -202,7 +202,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_task_update",
-      label: "Update Suite Task",
+      label: "Update Burrow Task",
       description:
         "Update a task's metadata (title, description, priority, epic). Do NOT use this to change task status during normal lifecycle execution — lifecycle status transitions (in_progress → in_review → done) are driven automatically by the plan engine when validations resolve. Only use the status field for exceptional out-of-band corrections.",
       parameters: Type.Object({
@@ -224,7 +224,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_plan_create",
-      label: "Create Suite Plan",
+      label: "Create Burrow Plan",
       description: "Create a plan (ordered stages) for a task. Plans must be approved before execution.",
       parameters: Type.Object({
         task_id: Type.String({ description: "Task ID to create the plan for" }),
@@ -244,7 +244,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_plan_get",
-      label: "Get Suite Plan",
+      label: "Get Burrow Plan",
       description: "Get the current approved plan for a task, including all stages and their validation status.",
       parameters: Type.Object({
         task_id: Type.String({ description: "Task ID" }),
@@ -253,7 +253,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_plan_submit",
-      label: "Submit Suite Plan",
+      label: "Submit Burrow Plan",
       description: "Submit a draft plan for human review. Plan must be in 'draft' status.",
       parameters: Type.Object({
         plan_id: Type.String({ description: "Plan ID to submit" }),
@@ -262,7 +262,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_stage_start",
-      label: "Start Suite Stage",
+      label: "Start Burrow Stage",
       description: "Start a stage, transitioning it from pending to running. The plan must be approved.",
       parameters: Type.Object({
         stage_id: Type.String({ description: "Stage ID to start" }),
@@ -271,7 +271,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_stage_list",
-      label: "List Suite Stages",
+      label: "List Burrow Stages",
       description: "List all stages for a plan, ordered by position.",
       parameters: Type.Object({
         plan_id: Type.String({ description: "Plan ID" }),
@@ -280,7 +280,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_validation_evaluate",
-      label: "Evaluate Suite Validation",
+      label: "Evaluate Burrow Validation",
       description: "Submit a pass or fail result for a validation check.",
       parameters: Type.Object({
         validation_id: Type.String({ description: "Validation ID" }),
@@ -294,7 +294,7 @@ export const suitePlugin: ChannelPlugin = {
       name: "validation_pass",
       label: "Pass Validation",
       description:
-        "Alias for Suite validation pass convenience. Use when prompts refer to validation_pass directly.",
+        "Alias for Burrow validation pass convenience. Use when prompts refer to validation_pass directly.",
       parameters: Type.Object({
         validation_id: Type.String({ description: "Validation ID" }),
         evidence: Type.Optional(Type.Record(Type.String(), Type.Unknown(), { description: "Supporting evidence" })),
@@ -306,7 +306,7 @@ export const suitePlugin: ChannelPlugin = {
       name: "stage_complete",
       label: "Complete Stage",
       description:
-        "Alias for Suite stage completion helper. Use when prompts refer to stage_complete directly.",
+        "Alias for Burrow stage completion helper. Use when prompts refer to stage_complete directly.",
       parameters: Type.Object({
         stage_id: Type.String({ description: "Stage ID to complete" }),
       }),
@@ -316,7 +316,7 @@ export const suitePlugin: ChannelPlugin = {
       name: "report_blocker",
       label: "Report Blocker",
       description:
-        "Report a structured blocker to Suite when prompts refer to report_blocker directly.",
+        "Report a structured blocker to Burrow when prompts refer to report_blocker directly.",
       parameters: Type.Object({
         task_id: Type.String({ description: "Task ID" }),
         stage_id: Type.String({ description: "Stage ID" }),
@@ -327,7 +327,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_validation_list",
-      label: "List Suite Validations",
+      label: "List Burrow Validations",
       description: "List all validations for a stage.",
       parameters: Type.Object({
         stage_id: Type.String({ description: "Stage ID" }),
@@ -336,7 +336,7 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_review_request_create",
-      label: "Create Suite Review Request",
+      label: "Create Burrow Review Request",
       description:
         "Submit evidence for a manual_approval validation gate. Creates a review request with labelled items for human review. Each item is independently approvable. Use this instead of suite_validation_evaluate for manual_approval validations.",
       parameters: Type.Object({
@@ -356,7 +356,7 @@ export const suitePlugin: ChannelPlugin = {
       name: "review_request_create",
       label: "Create Review Request",
       description:
-        "Alias for suite_review_request_create. Use when Suite dispatch prompts refer to review_request_create directly.",
+        "Alias for suite_review_request_create. Use when Burrow dispatch prompts refer to review_request_create directly.",
       parameters: Type.Object({
         validation_id: Type.String({ description: "The manual_approval validation ID to submit evidence for" }),
         items: Type.Array(
@@ -371,9 +371,9 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_space_list",
-      label: "List Suite Spaces",
+      label: "List Burrow Spaces",
       description:
-        "List Suite spaces the agent is a member of. Use to discover space IDs for proactive messaging.",
+        "List Burrow spaces the agent is a member of. Use to discover space IDs for proactive messaging.",
       parameters: Type.Object({
         kind: Type.Optional(Type.String({ description: "Filter by kind: channel or dm" })),
       }),
@@ -381,11 +381,11 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_space_get_context",
-      label: "Get Suite Space Context",
+      label: "Get Burrow Space Context",
       description:
-        "Get a bounded context snapshot for a Suite space, including recent messages, participants, canvases, and active tasks.",
+        "Get a bounded context snapshot for a Burrow space, including recent messages, participants, canvases, and active tasks.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         message_limit: Type.Optional(
           Type.Number({ description: "Number of recent messages to include (default 10, max 20)" })
         ),
@@ -401,7 +401,7 @@ export const suitePlugin: ChannelPlugin = {
       description:
         "Alias for suite_space_get_context. Use when prompts refer to space_get_context directly.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         message_limit: Type.Optional(
           Type.Number({ description: "Number of recent messages to include (default 10, max 20)" })
         ),
@@ -413,11 +413,11 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_space_search_messages",
-      label: "Search Suite Space Messages",
+      label: "Search Burrow Space Messages",
       description:
-        "Search messages in a Suite space with bounded results.",
+        "Search messages in a Burrow space with bounded results.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         query: Type.String({ description: "Search query" }),
         limit: Type.Optional(Type.Number({ description: "Maximum number of results to return (default 5, max 10)" })),
       }),
@@ -429,7 +429,7 @@ export const suitePlugin: ChannelPlugin = {
       description:
         "Alias for suite_space_search_messages. Use when prompts refer to space_search_messages directly.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         query: Type.String({ description: "Search query" }),
         limit: Type.Optional(Type.Number({ description: "Maximum number of results to return (default 5, max 10)" })),
       }),
@@ -437,11 +437,11 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_space_get_messages",
-      label: "Get Suite Space Messages",
+      label: "Get Burrow Space Messages",
       description:
-        "Fetch a bounded message window for a Suite space.",
+        "Fetch a bounded message window for a Burrow space.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         around_message_id: Type.Optional(Type.String({ description: "Fetch a window centered around this message ID" })),
         before_message_id: Type.Optional(Type.String({ description: "Fetch messages before this message ID" })),
         after_message_id: Type.Optional(Type.String({ description: "Fetch messages after this message ID" })),
@@ -455,7 +455,7 @@ export const suitePlugin: ChannelPlugin = {
       description:
         "Alias for suite_space_get_messages. Use when prompts refer to space_get_messages directly.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         around_message_id: Type.Optional(Type.String({ description: "Fetch a window centered around this message ID" })),
         before_message_id: Type.Optional(Type.String({ description: "Fetch messages before this message ID" })),
         after_message_id: Type.Optional(Type.String({ description: "Fetch messages after this message ID" })),
@@ -465,11 +465,11 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_canvas_list",
-      label: "List Suite Canvases",
+      label: "List Burrow Canvases",
       description:
-        "List canvases in a Suite space with bounded summaries.",
+        "List canvases in a Burrow space with bounded summaries.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         limit: Type.Optional(Type.Number({ description: "Maximum number of canvases to return (default 10, max 20)" })),
       }),
       execute: suiteToolExecute("canvas_list"),
@@ -480,16 +480,16 @@ export const suitePlugin: ChannelPlugin = {
       description:
         "Alias for suite_canvas_list. Use when prompts refer to canvas_list directly.",
       parameters: Type.Object({
-        space_id: Type.String({ description: "UUID of the Suite space" }),
+        space_id: Type.String({ description: "UUID of the Burrow space" }),
         limit: Type.Optional(Type.Number({ description: "Maximum number of canvases to return (default 10, max 20)" })),
       }),
       execute: suiteToolExecute("canvas_list"),
     },
     {
       name: "suite_canvas_get",
-      label: "Get Suite Canvas",
+      label: "Get Burrow Canvas",
       description:
-        "Retrieve a canvas from Startup Suite by ID, either as a summary or as the full document state.",
+        "Retrieve a canvas from Burrow by ID, either as a summary or as the full document state.",
       parameters: Type.Object({
         canvas_id: Type.String({ description: "UUID of the canvas" }),
         mode: Type.Optional(Type.String({ description: "Retrieval mode: summary or document (default summary)" })),
@@ -509,9 +509,9 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_prompt_template_list",
-      label: "List Suite Prompt Templates",
+      label: "List Burrow Prompt Templates",
       description:
-        "List all prompt templates (dispatch and heartbeat prompts) stored in the Suite database. Returns slug, name, description, variables, updated_by, updated_at.",
+        "List all prompt templates (dispatch and heartbeat prompts) stored in the Burrow database. Returns slug, name, description, variables, updated_by, updated_at.",
       parameters: Type.Object({}),
       execute: suiteToolExecute("prompt_template_list"),
     },
@@ -519,13 +519,13 @@ export const suitePlugin: ChannelPlugin = {
       name: "prompt_template_list",
       label: "List Prompt Templates",
       description:
-        "Alias for suite_prompt_template_list. Use when Suite dispatch prompts refer to prompt_template_list directly.",
+        "Alias for suite_prompt_template_list. Use when Burrow dispatch prompts refer to prompt_template_list directly.",
       parameters: Type.Object({}),
       execute: suiteToolExecute("prompt_template_list"),
     },
     {
       name: "suite_prompt_template_update",
-      label: "Update Suite Prompt Template",
+      label: "Update Burrow Prompt Template",
       description:
         "Update the content of a prompt template by slug. Use {{variable_name}} placeholders for dynamic interpolation. Sets updated_by to \"agent\". Use suite_prompt_template_list to see available slugs and their variables.",
       parameters: Type.Object({
@@ -542,7 +542,7 @@ export const suitePlugin: ChannelPlugin = {
       name: "prompt_template_update",
       label: "Update Prompt Template",
       description:
-        "Alias for suite_prompt_template_update. Use when Suite dispatch prompts refer to prompt_template_update directly.",
+        "Alias for suite_prompt_template_update. Use when Burrow dispatch prompts refer to prompt_template_update directly.",
       parameters: Type.Object({
         slug: Type.String({ description: "Template slug" }),
         content: Type.String({ description: "New template content" }),
@@ -551,9 +551,9 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_federation_status",
-      label: "Suite Federation Status",
+      label: "Burrow Federation Status",
       description:
-        "Check the connection status of all registered agent runtimes in Startup Suite. Shows which runtimes are online, when they connected, and when they last sent a message. Use to diagnose connectivity issues.",
+        "Check the connection status of all registered agent runtimes in Burrow. Shows which runtimes are online, when they connected, and when they last sent a message. Use to diagnose connectivity issues.",
       parameters: Type.Object({}),
       execute: suiteToolExecute("federation_status"),
     },
@@ -615,7 +615,7 @@ export const suitePlugin: ChannelPlugin = {
       execute: suiteToolExecute("org_memory_search"),
     },
     // ── Skill registry tools ──────────────────────────────────────────
-    // NOTE: Suite resolves `tool_call` names by exact string match, with no
+    // NOTE: Burrow resolves `tool_call` names by exact string match, with no
     // underscore<->dot translation. Older servers register these skill tools
     // only with dotted names (`skill.list`, `skill.get`, `skill.upsert`);
     // newer ones register underscore names and keep dotted as hidden aliases.
@@ -624,9 +624,9 @@ export const suitePlugin: ChannelPlugin = {
     // tool". The same applies to epic_create / epic.create below.
     {
       name: "suite_skill_list",
-      label: "List Suite Skills",
+      label: "List Burrow Skills",
       description:
-        "List registered skills (centrally-distributed markdown playbooks) from the Suite skill registry. Returns summaries without the content body. Use `query` to filter by case-insensitive substring against name, description, or slug.",
+        "List registered skills (centrally-distributed markdown playbooks) from the Burrow skill registry. Returns summaries without the content body. Use `query` to filter by case-insensitive substring against name, description, or slug.",
       parameters: Type.Object({
         query: Type.Optional(Type.String({ description: "Case-insensitive substring to filter by. Omit to list everything." })),
       }),
@@ -634,9 +634,9 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_skill_get",
-      label: "Get Suite Skill",
+      label: "Get Burrow Skill",
       description:
-        "Fetch a full skill (including markdown content) from the Suite skill registry by slug or id. Exactly one of `slug` or `id` is required.",
+        "Fetch a full skill (including markdown content) from the Burrow skill registry by slug or id. Exactly one of `slug` or `id` is required.",
       parameters: Type.Object({
         slug: Type.Optional(Type.String({ description: "Skill slug (preferred lookup key)." })),
         id: Type.Optional(Type.String({ description: "Skill UUID (alternative lookup key)." })),
@@ -645,9 +645,9 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_skill_upsert",
-      label: "Upsert Suite Skill",
+      label: "Upsert Burrow Skill",
       description:
-        "Create or update a skill in the Suite skill registry by name. Slug is derived from the name. Existing skills with the same slug are replaced (content + description). Partial updates are not supported — pass the full content on every update.",
+        "Create or update a skill in the Burrow skill registry by name. Slug is derived from the name. Existing skills with the same slug are replaced (content + description). Partial updates are not supported — pass the full content on every update.",
       parameters: Type.Object({
         name: Type.String({ description: "Human-readable name. Slug is derived from this." }),
         description: Type.String({ description: "One-line summary shown in skill.list." }),
@@ -657,11 +657,11 @@ export const suitePlugin: ChannelPlugin = {
     },
     {
       name: "suite_epic_create",
-      label: "Create Suite Epic",
+      label: "Create Burrow Epic",
       description:
-        "Create a new epic in a Startup Suite project. Epics organize related tasks. Use when scoping a new initiative or workstream.",
+        "Create a new epic in a Burrow project. Epics organize related tasks. Use when scoping a new initiative or workstream.",
       parameters: Type.Object({
-        project_id: Type.String({ description: "UUID of the Suite project to create the epic in." }),
+        project_id: Type.String({ description: "UUID of the Burrow project to create the epic in." }),
         name: Type.String({ description: "Human-readable epic name / title." }),
         description: Type.Optional(Type.String({ description: "Longer description of the epic's intent and scope." })),
         acceptance_criteria: Type.Optional(Type.String({ description: "Acceptance criteria that define when the epic is considered done." })),
@@ -712,7 +712,7 @@ export const suitePlugin: ChannelPlugin = {
       description:
         "Alias for suite_epic_create. Use when prompts refer to epic_create directly.",
       parameters: Type.Object({
-        project_id: Type.String({ description: "UUID of the Suite project to create the epic in." }),
+        project_id: Type.String({ description: "UUID of the Burrow project to create the epic in." }),
         name: Type.String({ description: "Human-readable epic name / title." }),
         description: Type.Optional(Type.String({ description: "Longer description of the epic's intent and scope." })),
         acceptance_criteria: Type.Optional(Type.String({ description: "Acceptance criteria that define when the epic is considered done." })),
@@ -728,10 +728,10 @@ export const suitePlugin: ChannelPlugin = {
   outbound: {
     deliveryMode: "direct",
     async sendText({ to, text }) {
-      if (!to) throw new Error("Missing Startup Suite space id");
+      if (!to) throw new Error("Missing Burrow space id");
       const spaceId = to.startsWith(`${CHANNEL_ID}:`) ? to.slice(`${CHANNEL_ID}:`.length) : to;
       const client = clientForSpace(spaceId);
-      if (!client) throw new Error("Suite client is not connected");
+      if (!client) throw new Error("Burrow client is not connected");
       client.sendReply(spaceId, text);
       return { channel: CHANNEL_ID, messageId: `startup-suite:${Date.now()}` };
     },

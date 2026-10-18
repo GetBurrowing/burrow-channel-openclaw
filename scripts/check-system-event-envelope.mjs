@@ -291,8 +291,8 @@ await testCase(1, "happy-path", async (label) => {
     assertRealBody(ctx, fixture.signal.prompt, `${label}/signal.prompt`);
     assert.equal(
       ctx.SenderName,
-      "Startup Suite",
-      `${label}/signal.prompt: with no message.author the sender must default to "Startup Suite" ` +
+      "Burrow",
+      `${label}/signal.prompt: with no message.author the sender must default to "Burrow" ` +
       `so the agent's prompt reads identically before and after core's message key lands`,
     );
   }

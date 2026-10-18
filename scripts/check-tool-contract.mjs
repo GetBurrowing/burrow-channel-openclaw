@@ -68,7 +68,7 @@ const registeredToolNames = uniqueSorted(
   extractQuotedNames(registeredBlock, /"([^"]+)"/g),
 );
 
-// Some entries in the registered list intentionally name Suite's wire-format
+// Some entries in the registered list intentionally name Burrow's wire-format
 // tool identifiers (e.g. dotted `skill.list`) so the capability-check diff in
 // suite-client.ts does not warn. They have no agentTools counterpart by name.
 const wireOnlyRegistered = new Set(registeredToolNames.filter((name) => name.includes(".")));
@@ -81,7 +81,7 @@ const missingLifecycle = diff(requiredLifecycleTools, channelToolNames);
 const missingContextTools = diff(requiredContextTools, channelToolNames);
 
 if (missingFromRegistered.length || extraInRegistered.length || missingLifecycle.length || missingContextTools.length) {
-  console.error("Startup Suite plugin tool contract check failed.\n");
+  console.error("Burrow plugin tool contract check failed.\n");
 
   if (missingFromRegistered.length) {
     console.error("Missing from suite-client registered list:");
@@ -111,5 +111,5 @@ if (missingFromRegistered.length || extraInRegistered.length || missingLifecycle
 }
 
 console.log(
-  `Startup Suite plugin tool contract OK: ${channelToolNames.length} tools, lifecycle + context aliases present, suite-client registry in sync.`,
+  `Burrow plugin tool contract OK: ${channelToolNames.length} tools, lifecycle + context aliases present, suite-client registry in sync.`,
 );

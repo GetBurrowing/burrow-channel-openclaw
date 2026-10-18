@@ -2,7 +2,7 @@
 //
 // WHAT THIS PINS. An inbound chat signal carries `signal.message_id` (core
 // `AgentResponder.build_external_signal/3`). The reply the agent delivers for
-// that run must push `in_reply_to_message_id` set to that id, so Suite can
+// that run must push `in_reply_to_message_id` set to that id, so Burrow can
 // link the reply to the message it answers. Two layers:
 //
 //   A. handleSuiteInbound -> client.sendReply receives the id as extras.

@@ -6,10 +6,10 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { BUILD, BUILD_ERROR, PROCESS_STARTED_AT } from "./build-identity.js";
 
-// Federation handshake: declare what client product is connecting so the Suite
+// Federation handshake: declare what client product is connecting so the Burrow
 // dispatch renderer can distinguish OpenClaw runtimes (multi-agent per
 // connection) from Claude-channel runtimes (single-agent per connection).
-// Suite-side treats missing client_info as "unknown" (forward compatible).
+// Burrow-side treats missing client_info as "unknown" (forward compatible).
 const PLUGIN_VERSION: string = (() => {
   try {
     const here = dirname(fileURLToPath(import.meta.url));
@@ -78,7 +78,7 @@ export interface AttentionPayload {
     task_id?: string;
     task_status?: string;
     message_id?: string;
-    // Target Suite agent for this attention event. Present on Suite versions
+    // Target Burrow agent for this attention event. Present on Burrow versions
     // that pack the responder's agent identity into the external signal. Used
     // by the plugin to route to a specific OpenClaw agent via peer-matched
     // bindings instead of falling through to the channel default.
@@ -193,7 +193,7 @@ function definedExtras(extras?: ReplyExtras): ReplyExtras {
 }
 
 /**
- * Underscore wire names whose legacy dotted spelling an OLD Suite server
+ * Underscore wire names whose legacy dotted spelling an OLD Burrow server
  * still requires. Keyed by the underscore form; see SuiteClient.callTool.
  */
 export const DOTTED_TWINS: Readonly<Record<string, string>> = Object.freeze({
@@ -241,7 +241,7 @@ export class SuiteClient {
   }
 
   /**
-   * Call a Suite tool over the WebSocket and wait for the result.
+   * Call a Burrow tool over the WebSocket and wait for the result.
    *
    * Wire-name negotiation (Burrow migration, task 01a14a7d). Core resolves
    * `tool_call` names by EXACT string membership, and its catalogue is moving
@@ -470,7 +470,7 @@ export class SuiteClient {
         "suite_org_context_list",
         "suite_org_memory_append",
         "suite_org_memory_search",
-        // Skill registry — old Suite servers advertise dotted names
+        // Skill registry — old Burrow servers advertise dotted names
         // (`skill.list`, etc.); new servers advertise underscore names and
         // keep the dotted ones as hidden aliases. The plugin exposes
         // underscored tools (suite_skill_*, skill_*) and callTool sends the
@@ -487,7 +487,7 @@ export class SuiteClient {
         "skill.list",
         "skill.get",
         "skill.upsert",
-        // Epic registry — current Suite registers `epic_create`; `epic.create`
+        // Epic registry — current Burrow registers `epic_create`; `epic.create`
         // is kept for older servers. The plugin exposes both
         // `suite_epic_create` and the unprefixed `epic_create` alias for
         // legacy WS-channel agents (task 019d60ca).
@@ -500,13 +500,13 @@ export class SuiteClient {
         (t: string) => !registered.includes(t) && !registered.includes(`suite_${t}`)
       );
       if (unregistered.length > 0) {
-        console.warn(`[suite-client] Suite advertises tools not registered in plugin: ${unregistered.join(", ")}. Update the plugin to add these.`);
+        console.warn(`[suite-client] Burrow advertises tools not registered in plugin: ${unregistered.join(", ")}. Update the plugin to add these.`);
       }
-      console.log(`[suite-client] Suite capabilities: ${payload.tool_count} tools available, ${registered.length} registered in plugin`);
+      console.log(`[suite-client] Burrow capabilities: ${payload.tool_count} tools available, ${registered.length} registered in plugin`);
     });
 
     this.channel.on("attention", (payload: AttentionPayload) => {
-      // Deduplicate — Suite may broadcast once but multiple channel joins can receive it
+      // Deduplicate — Burrow may broadcast once but multiple channel joins can receive it
       const msgId = payload.signal?.message_id || payload.message?.content?.slice(0, 50) || "";
       const dedupeKey = `${payload.signal?.space_id}:${msgId}:${Date.now() >> 10}`; // ~1s window
       if (this.recentMessageIds.has(dedupeKey)) return;

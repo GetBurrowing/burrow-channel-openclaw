@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.1
+
+- Product-name wording only; tool names, parameters and wire behaviour unchanged. Tool labels and descriptions, error messages, the task-session preamble, the context preamble and the dispatch fallback sender now say Burrow.
+- New check: `scripts/check-product-name.mjs` (`npm run test:product-name`), a temporary rename guard that fails on the old product name outside an explicit allowlist.
+
 ## v0.8.0
 
 - Startup Suite is now Burrow. Display names say Burrow: the plugin and channel labels, the manifest and schema descriptions, installer output, and the runtime log prefix `burrow(<account>)` (was `startup-suite(<account>)`) on connect, reconnect and missing-config lines, plus `burrow: attention handler error`. Token-ref log lines keep `startup-suite(<account>)` for now.

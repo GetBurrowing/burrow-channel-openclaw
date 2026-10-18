@@ -34,7 +34,7 @@ function taskPhaseGuidance(
     : { planCreate: "suite_plan_create", planSubmit: "suite_plan_submit", reviewRequest: "suite_review_request_create", taskGet: "suite_task_get", planGet: "suite_plan_get" };
 
   const common = [
-    "You are in an orchestrated Startup Suite task session.",
+    "You are in an orchestrated Burrow task session.",
     `Current task phase: ${taskSession.phase}.`,
     "Treat the most recent inbound task payload as the authoritative objective and context.",
     "If the dispatch payload includes attached skills or bundled skill content, treat that payload content as the authoritative skill guidance for this task before trying to rediscover skills from disk.",
@@ -56,7 +56,7 @@ function taskPhaseGuidance(
       "Do not treat the session like a fresh chat; act on the current stage objective first.",
       "If the current stage already names concrete scripts, files, directories, or tool calls, start there instead of re-fetching broad task/project context.",
       `Avoid redundant ${T.taskGet}/${T.planGet}/task-listing calls on the first turn unless you are missing a required identifier or the stage contract is genuinely ambiguous.`,
-      "If an attached or bundled skill is relevant (for example Suite Coding Agent), use the attached skill guidance or the workspace-local skill path first; do not invent a different installed-skill path.",
+      "If an attached or bundled skill is relevant, use the attached skill guidance or the workspace-local skill path first; do not invent a different installed-skill path.",
       "If a stage description includes explicit stage_id/task_id arguments or a concrete evidence path, use those exact values directly.",
     ],
     review: [
@@ -223,7 +223,7 @@ export default defineChannelPluginEntry({
       const outputTokens = usage.output || 0;
       const costUsd = estimateCost(event.model || "", inputTokens, outputTokens);
 
-      // Omit space_id rather than guessing. Suite stores it as :binary_id, so a
+      // Omit space_id rather than guessing. Burrow stores it as :binary_id, so a
       // non-UUID raises Ecto.ChangeError and kills the runtime channel process,
       // and a wrong-but-valid UUID misattributes usage silently. Warn loudly so
       // the next session-key format change surfaces here instead of as a

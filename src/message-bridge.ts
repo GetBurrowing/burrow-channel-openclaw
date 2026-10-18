@@ -1,7 +1,7 @@
 import type { AttentionPayload } from "./suite-client.js";
 
 /**
- * Build a markdown preamble from Suite context.
+ * Build a markdown preamble from Burrow context.
  * Used by the before_prompt_build hook to inject context into the system prompt.
  *
  * Handles three context shapes (any or all may be present):
@@ -59,10 +59,10 @@ export function formatContextPreamble(
       lines.push(context.space.description);
     }
     lines.push("");
-    lines.push(`[Suite Context]`);
+    lines.push(`[Burrow Context]`);
     lines.push(`Space ID: ${context.space.id}`);
     if (opts.useMcpTools) {
-      lines.push(`(pass this space_id when a Suite MCP tool requests it)`);
+      lines.push(`(pass this space_id when a Burrow MCP tool requests it)`);
     } else {
       lines.push(`(use this space_id when calling suite_canvas_create, suite_canvas_update, suite_send_media, suite_task_create, suite_task_get, suite_task_list, suite_task_update, suite_task_complete, suite_plan_create, suite_plan_get, suite_plan_submit, suite_stage_start, suite_stage_list, suite_validation_evaluate, suite_validation_list, stage_complete, report_blocker, or suite_review_request_create)`);
     }
