@@ -1,7 +1,7 @@
 // Federation handshake contract test (stage 3 of task 019df0ee).
 //
 // Verifies that the SuiteClient's runtime channel join passes
-// `client_info: { product: "openclaw", version: <truthy> }` so the Suite
+// `client_info: { product: "openclaw", version: <truthy> }` so the Burrow
 // dispatch renderer can distinguish OpenClaw runtimes from Claude-channel
 // runtimes. We don't open a real WebSocket — `import "phoenix"` is
 // redirected via a tiny ESM loader (_phoenix-stub-loader.mjs) to a shim

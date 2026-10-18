@@ -65,7 +65,7 @@ export const orchestratedSystemEvent: AttentionPayload = {
     agent_slug: "higgins",
     metadata: { prompt: "Review the submitted plan." },
   },
-  message: { content: "Review the submitted plan.", author: "Startup Suite" },
+  message: { content: "Review the submitted plan.", author: "Burrow" },
   history: [],
   context: {},
 };

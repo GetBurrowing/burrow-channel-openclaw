@@ -1,9 +1,9 @@
 // Space-resolution regression test (0.6.8 hotfix).
 //
 // Session keys extend OpenClaw's resolved route key
-// (`agent:<agentId>:startup-suite:group:<peer>`) and `<peer>` is the Suite
+// (`agent:<agentId>:startup-suite:group:<peer>`) and `<peer>` is the Burrow
 // agent slug. In 0.6.6/0.6.7 `resolveSpaceId` still derived the space by
-// positional `split(":")` indexing, so it returned the slug ("higgins"). Suite
+// positional `split(":")` indexing, so it returned the slug ("higgins"). Burrow
 // stores `usage_events.space_id` as `:binary_id`, so that raised
 // Ecto.ChangeError server-side and killed the runtime channel process. When the
 // peer happened to be a UUID it was worse: the row inserted cleanly against the
@@ -47,7 +47,7 @@ const SPACE = "3f1c0c2e-9a4b-4d51-8c77-0f2b6ad91e04";
 const EXEC_SPACE = "88b2e2d0-4c11-4a9f-9d3e-1b7a5c6e2f10";
 const TASK_ID = "019f640d-1111-7000-a000-000000000001";
 
-// Production shape: peer is the Suite agent slug, not the space id.
+// Production shape: peer is the Burrow agent slug, not the space id.
 const AGENT_ROUTE_KEY = "agent:ryan-home-openclaw:startup-suite:group:higgins";
 
 // ---------------------------------------------------------------- unit tests
@@ -188,7 +188,7 @@ const recorded = usageEventFor(AGENT_ROUTE_KEY);
 assert.equal(recorded.space_id, SPACE, "recorded session must emit its space id");
 
 // 9. REGRESSION: unrecorded session emits NO space_id key at all. The property
-// must be absent, not undefined/null/"" — Suite casts space_id to :binary_id.
+// must be absent, not undefined/null/"" — Burrow casts space_id to :binary_id.
 const warnings = [];
 const realWarn = console.warn;
 console.warn = (...args) => warnings.push(args.join(" "));

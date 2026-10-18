@@ -1,5 +1,5 @@
 /**
- * Runtime-token references for a Startup Suite account.
+ * Runtime-token references for a Burrow account.
  *
  * ONE resolver for BOTH ref schemes, shared in syntax with suite-cli's
  * `--token-ref` (src/token_ref.ts there) and the core installer's channel

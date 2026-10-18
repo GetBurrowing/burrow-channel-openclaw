@@ -182,8 +182,8 @@ await assert.doesNotReject(
   // `message` key lands, and the two body sources stop being interchangeable.
   assert.equal(
     ctx.SenderName,
-    "Startup Suite",
-    "a dispatch with no message.author must be attributed to Startup Suite, not \"unknown\"",
+    "Burrow",
+    "a dispatch with no message.author must be attributed to Burrow, not \"unknown\"",
   );
 
   // 2. NO PHANTOM ADDRESSEE on the bare shape. isOrchestrated === false here
@@ -251,14 +251,14 @@ const PROMPT = "Review the architecture plan for task 019fa618 and return a verd
       prompt: "PROMPT-RUNG-TWO",
       agent_slug: "moore",
     },
-    message: { content: "MESSAGE-RUNG-ONE", author: "Startup Suite" },
+    message: { content: "MESSAGE-RUNG-ONE", author: "Burrow" },
   });
   assert.equal(
     ctx.RawBody,
     "MESSAGE-RUNG-ONE",
     "message.content must remain rung 1 of the body chain, ahead of signal.prompt",
   );
-  assert.equal(ctx.SenderName, "Startup Suite", "message.author must still be honoured when present");
+  assert.equal(ctx.SenderName, "Burrow", "message.author must still be honoured when present");
 }
 
 // ---------------------------------------------------------------------------

@@ -1,10 +1,12 @@
 # Captured `attention` envelopes
 
 These two files are **captures, not constructions**. They are the payloads a live
-Startup Suite deployment pushes on the phoenix `"attention"` event, copied out of
+Burrow deployment pushes on the phoenix `"attention"` event, copied out of
 task `019fa618-ca92`'s body verbatim — no key reordering, no normalisation, no
 substituted prompt. `scripts/check-system-event-envelope.mjs` drives the real
-compiled `handleSuiteInbound` against them.
+compiled `handleSuiteInbound` against them. They predate the Burrow rename, so
+their text still carries the old product name; keep them byte-identical
+(scripts/check-product-name.mjs allowlists those lines).
 
 The point of capturing rather than hand-writing is the failure mode this repo
 actually suffered: a handler whose production code path was unreachable while

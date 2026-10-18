@@ -225,7 +225,7 @@ function orchestratedPayload() {
         prompt: "Review the submitted plan and return a verdict.",
       },
     },
-    message: { content: "Review the submitted plan and return a verdict.", author: "Startup Suite" },
+    message: { content: "Review the submitted plan and return a verdict.", author: "Burrow" },
   };
 }
 

@@ -10,12 +10,12 @@ const CHANNEL_ID = "startup-suite";
 
 // Reasons that represent an ongoing human conversation — these share one
 // session per space so the agent keeps its thread. Mirrors `@routable_reasons`
-// in Suite's `Platform.Chat.AgentResponder`. Every other reason that reaches a
+// in Burrow's `Platform.Chat.AgentResponder`. Every other reason that reaches a
 // runtime (`task_assigned`, `system_event`, `meeting_scribe_completion`,
 // `meeting_triage_dispatch`) is an automated unit of work and runs isolated.
 //
 // Caveat: a responsibility with `trigger_kind: :chat_pattern` is emitted as
-// `:mention`, indistinguishable from a human @mention until Suite forwards the
+// `:mention`, indistinguishable from a human @mention until Burrow forwards the
 // responsibility metadata it currently drops in `build_external_signal/3`.
 const CONVERSATIONAL_REASONS = new Set([
   "mention",
@@ -118,26 +118,28 @@ export async function handleSuiteInbound(params: {
   // before the try/catch below was ever entered, which src/channel.ts flattened
   // to a single `attention handler error` line: the agent never woke.
   //
-  // "Startup Suite" rather than "unknown" is load-bearing, not cosmetic:
-  // `enrichedBody` below is `**${senderName}**: ${rawBody}`, and the server's
-  // own chat-path payload carries `message.author == "Startup Suite"`. Matching
-  // it keeps the two body sources interchangeable, so the agent's prompt reads
-  // identically before and after core's `message` key lands.
+  // The fallback only names the sender when the payload carries no
+  // `message.author`; `enrichedBody` below is `**${senderName}**: ${rawBody}`.
+  // Current core sends `message.author == "TaskRouter"` on dispatches
+  // (orchestration/task_router.ex, execution_space.ex @system_display_name),
+  // so this fallback is reached only by payloads without a `message` key.
+  // Naming the product ("Burrow") rather than "unknown" keeps such a body
+  // attributable to the platform instead of to an unknown chat user.
   const author = payload.message?.author;
   const fallbackSender = isLifecycleSignal
     ? "TaskRouter"
     : isDispatch
-      ? "Startup Suite"
+      ? "Burrow"
       : "unknown";
   const senderId = author || fallbackSender;
   const senderName = author || fallbackSender;
   const isGroup = true;
 
-  // Resolve agent route. Prefer the Suite agent identifier when Suite packs it
-  // into the signal (newer Suite builds) — that lets per-agent peer bindings
+  // Resolve agent route. Prefer the Burrow agent identifier when Burrow packs it
+  // into the signal (newer Burrow builds) — that lets per-agent peer bindings
   // target specific OpenClaw agents instead of falling through to the channel
   // default. Fall back to "orchestration" (orchestrated signals) or the spaceId
-  // (plain chat) on older Suite builds that don't carry agent identity.
+  // (plain chat) on older Burrow builds that don't carry agent identity.
   const signalAgentPeer = payload.signal?.agent_slug || payload.signal?.agent_id;
   const routePeerId = signalAgentPeer ?? (isOrchestrated ? "orchestration" : spaceId);
   const route = core.channel.routing.resolveAgentRoute({
@@ -154,7 +156,7 @@ export async function handleSuiteInbound(params: {
   const { rememberSpaceAccount } = await import("./plugin-state.js");
   rememberSpaceAccount(spaceId, accountId);
 
-  // Space-scope the session key: when routing uses the Suite agent identity
+  // Space-scope the session key: when routing uses the Burrow agent identity
   // as the peer (so the same OpenClaw agent handles the agent across every
   // space), the resolved session key collapses all spaces into one session,
   // causing context bleed between rooms. Append the space_id to keep per-
@@ -242,7 +244,7 @@ export async function handleSuiteInbound(params: {
     // resetting a shared key would still carry the previous run's tail.
     //
     // Prefer message_id so a reconnect redelivery lands in the same session
-    // rather than spawning a duplicate run. Suite does not forward message_id
+    // rather than spawning a duplicate run. Burrow does not forward message_id
     // on the chat path today, so most dispatches fall back to arrival time.
     const discriminator =
       payload.signal?.message_id ??
@@ -268,7 +270,7 @@ export async function handleSuiteInbound(params: {
   setSessionOptions(sessionKey, resolveAccountOptions(config, accountId));
 
   // Bind the session to its space explicitly. The space id is NOT recoverable
-  // from the session key — the route peer is the Suite agent slug — so usage
+  // from the session key — the route peer is the Burrow agent slug — so usage
   // events and anything else that needs the space read it back from this map.
   // Only a genuine `signal.space_id` counts: `spaceId` above falls back to the
   // task id, which is a UUID and would insert cleanly under the wrong space.
@@ -302,7 +304,7 @@ export async function handleSuiteInbound(params: {
     sessionKey,
   });
   const body = core.channel.reply.formatAgentEnvelope({
-    channel: "Startup Suite",
+    channel: "Burrow",
     from: fromLabel,
     timestamp: Date.now(),
     previousTimestamp,
@@ -433,7 +435,7 @@ export async function handleSuiteInbound(params: {
       },
     });
 
-    // The inbound message this run answers (task 01a0d8de). Suite links the
+    // The inbound message this run answers (task 01a0d8de). Burrow links the
     // reply to it. Absent on system_event dispatches, which answer no message;
     // core validates the id and drops it, without failing the reply, if it is
     // not a message in the reply's space.
