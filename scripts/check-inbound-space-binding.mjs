@@ -33,7 +33,7 @@ const { resolveSpaceId } = await import(distUrl("src", "space-resolution.js"));
 
 const SPACE = "5a7f9c31-2d64-4b08-9f12-7c3e8a1d0b55";
 const TASK_ID = "019f640d-2222-7000-a000-000000000002";
-const ROUTE_KEY = "agent:ryan-home-openclaw:startup-suite:group:higgins";
+const ROUTE_KEY = "agent:ryan-home-openclaw:burrow:group:higgins";
 
 // Route key mirrors what OpenClaw's resolver returns today: the peer is the
 // Burrow agent slug, so the space id is NOT present anywhere in the key.

@@ -9,7 +9,7 @@ const clients = new Map<string, SuiteClient>();
 const spaceToAccountId = new Map<string, string>();
 const sessionContexts = new Map<string, unknown>();
 // sessionKey -> space UUID. Session keys extend OpenClaw's resolved route key
-// (`agent:<agentId>:startup-suite:group:<peer>`), and since the peer is the
+// (`agent:<agentId>:burrow:group:<peer>`), and since the peer is the
 // Burrow agent slug the space id is not recoverable from the key by parsing.
 // Anything that needs the space for a session must read it from here.
 const sessionSpaces = new Map<string, string>();
@@ -72,7 +72,7 @@ function loadLegacyConfig(): SuiteConfig {
 }
 
 function channelConfigRoot(cfg: any): any {
-  if (cfg?.channels?.["startup-suite"]) return cfg.channels["startup-suite"];
+  if (cfg?.channels?.["burrow"]) return cfg.channels["burrow"];
   if (cfg?.accounts) return cfg;
   return null;
 }

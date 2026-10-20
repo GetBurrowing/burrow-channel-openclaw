@@ -74,7 +74,7 @@ const REVIEW_PLAN = "system-event-architecture-review-plan.json";
 const BARE = "system-event-bare.json";
 
 const PLACEHOLDER = "System dispatch: system_event";
-const ROUTE_KEY = "agent:ryan-home-openclaw:startup-suite:group:moore";
+const ROUTE_KEY = "agent:ryan-home-openclaw:burrow:group:moore";
 // Used only by case 7, which needs a signal that is ALLOWED to reach the wire.
 // Neither fixture has a space_id — that is the point of case 5.
 const REAL_SPACE = "5a7f9c31-2d64-4b08-9f12-7c3e8a1d0b55";

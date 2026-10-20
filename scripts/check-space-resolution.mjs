@@ -1,7 +1,7 @@
 // Space-resolution regression test (0.6.8 hotfix).
 //
 // Session keys extend OpenClaw's resolved route key
-// (`agent:<agentId>:startup-suite:group:<peer>`) and `<peer>` is the Burrow
+// (`agent:<agentId>:burrow:group:<peer>`) and `<peer>` is the Burrow
 // agent slug. In 0.6.6/0.6.7 `resolveSpaceId` still derived the space by
 // positional `split(":")` indexing, so it returned the slug ("higgins"). Burrow
 // stores `usage_events.space_id` as `:binary_id`, so that raised
@@ -48,7 +48,7 @@ const EXEC_SPACE = "88b2e2d0-4c11-4a9f-9d3e-1b7a5c6e2f10";
 const TASK_ID = "019f640d-1111-7000-a000-000000000001";
 
 // Production shape: peer is the Burrow agent slug, not the space id.
-const AGENT_ROUTE_KEY = "agent:ryan-home-openclaw:startup-suite:group:higgins";
+const AGENT_ROUTE_KEY = "agent:ryan-home-openclaw:burrow:group:higgins";
 
 // ---------------------------------------------------------------- unit tests
 
@@ -98,7 +98,7 @@ assert.equal(
 // 5. A dispatch key derived from an unrecorded conversation key resolves to
 // nothing rather than to the reason or discriminator segment.
 const DISPATCH_KEY = buildDispatchSessionKey(
-  "agent:ryan-home-openclaw:startup-suite:group:mycroft",
+  "agent:ryan-home-openclaw:burrow:group:mycroft",
   "system_event",
   "1764900000000-ab12cd",
 );
@@ -177,7 +177,7 @@ const usageEventFor = (sessionKey) => {
       sessionId: "sess-1",
       runId: "run-1",
     },
-    { sessionKey, channelId: "startup-suite", sessionId: "sess-1" },
+    { sessionKey, channelId: "burrow", sessionId: "sess-1" },
   );
   assert.equal(usageEvents.length, 1, `expected one usage event for ${sessionKey}`);
   return usageEvents[0];
@@ -194,7 +194,7 @@ const realWarn = console.warn;
 console.warn = (...args) => warnings.push(args.join(" "));
 let unrecorded;
 try {
-  unrecorded = usageEventFor("agent:ryan-home-openclaw:startup-suite:group:geordi");
+  unrecorded = usageEventFor("agent:ryan-home-openclaw:burrow:group:geordi");
 } finally {
   console.warn = realWarn;
 }

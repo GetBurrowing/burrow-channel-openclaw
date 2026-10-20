@@ -202,7 +202,7 @@ await check("underscore name without a twin is never retried", async () => {
 // 8. End to end through the plugin's legacy agentTools against an old server.
 await check("agentTools skill_list -> old server reaches skill.list", async () => {
   const cfg = {
-    channels: { "startup-suite": { accounts: { default: { url: "ws://x", runtimeId: "r", token: "t", useMcpTools: false } } } },
+    channels: { "burrow": { accounts: { default: { url: "ws://x", runtimeId: "r", token: "t", useMcpTools: false } } } },
   };
   const tool = suitePlugin.agentTools({ cfg }).find((t) => t.name === "suite_skill_list");
   assert.ok(tool, "suite_skill_list must exist in legacy agentTools");

@@ -1,10 +1,11 @@
 # Burrow Channel Plugin for OpenClaw
 
-Burrow is the new name of Startup Suite. The identifiers OpenClaw config and
-tooling key on are unchanged in this release: the channel id `startup-suite`,
-the plugin and npm package id `startup-suite-channel-plugin`, the extension
-directory `~/.openclaw/extensions/startup-suite-channel`, and every `suite_*`
-tool name. An existing `openclaw.json` keeps working without edits. The
+Burrow is the new name of Startup Suite. Since v0.9.0 the identifiers OpenClaw
+config keys on carry the Burrow name too: the channel id is `burrow`, the plugin
+and npm package id is `burrow-channel-plugin`, and the extension directory is
+`~/.openclaw/extensions/burrow-channel-plugin`. There is no alias for the old
+names: an `openclaw.json` written for v0.8.x or earlier must be re-registered
+(see CHANGELOG v0.9.0). Tool names (`suite_*`) are unchanged. The
 repository is `burrow-channel-openclaw` (formerly `openclaw-suite-channel`;
 GitHub redirects the old URL).
 
@@ -60,7 +61,7 @@ bash install.sh \
 
 ### What the installer does
 
-1. Copies plugin files to `~/.openclaw/extensions/startup-suite-channel/`
+1. Copies plugin files to `~/.openclaw/extensions/burrow-channel-plugin/`
 2. Installs npm dependencies
 3. Writes `config.json` with your runtime credentials (single-account default)
 4. Registers the channel and plugin in `openclaw.json`
@@ -110,7 +111,7 @@ prints one line to stderr naming the new spelling.
 
 | Variable | Deprecated fallback | Read by | Meaning |
 |---|---|---|---|
-| `BURROW_CHANNEL_EXT_DIR` | `SUITE_CHANNEL_EXT_DIR` | `install.sh`, `update.sh` | Extension dir to install into (default `~/.openclaw/extensions/startup-suite-channel`) |
+| `BURROW_CHANNEL_EXT_DIR` | `SUITE_CHANNEL_EXT_DIR` | `install.sh`, `update.sh` | Extension dir to install into (default `~/.openclaw/extensions/burrow-channel-plugin`) |
 | `BURROW_CHANNEL_OC_CONFIG` | `SUITE_CHANNEL_OC_CONFIG` | `install.sh` | `openclaw.json` to write (default `~/.openclaw/openclaw.json`) |
 | `BURROW_ACCOUNT_ID` | `SUITE_ACCOUNT_ID` | `scripts/test-connection.sh`, `scripts/test-connection.js` | Account to test when no argument is given |
 
@@ -146,7 +147,7 @@ Add the following to your `~/.openclaw/openclaw.json`:
 ```json
 {
   "channels": {
-    "startup-suite": {
+    "burrow": {
       "accounts": {
         "beacon": {
           "url": "wss://burrow.example.com/runtime/ws",
@@ -175,8 +176,8 @@ Add `bindings` entries in `openclaw.json` to point each account at a specific Op
 ```json
 {
   "bindings": [
-    { "agentId": "beacon-agent", "match": { "channel": "startup-suite", "accountId": "beacon" } },
-    { "agentId": "sage-agent",   "match": { "channel": "startup-suite", "accountId": "sage" } }
+    { "agentId": "beacon-agent", "match": { "channel": "burrow", "accountId": "beacon" } },
+    { "agentId": "sage-agent",   "match": { "channel": "burrow", "accountId": "sage" } }
   ]
 }
 ```
@@ -186,9 +187,9 @@ Add `bindings` entries in `openclaw.json` to point each account at a specific Op
 ```json
 {
   "bindings": [
-    { "agentId": "ops-agent",   "match": { "channel": "startup-suite", "accountId": "*", "peer": { "id": "ops-bot",  "kind": "group" } } },
-    { "agentId": "reply-agent", "match": { "channel": "startup-suite", "accountId": "*", "peer": { "id": "concierge", "kind": "group" } } },
-    { "agentId": "default-agent","match": { "channel": "startup-suite", "accountId": "*" } }
+    { "agentId": "ops-agent",   "match": { "channel": "burrow", "accountId": "*", "peer": { "id": "ops-bot",  "kind": "group" } } },
+    { "agentId": "reply-agent", "match": { "channel": "burrow", "accountId": "*", "peer": { "id": "concierge", "kind": "group" } } },
+    { "agentId": "default-agent","match": { "channel": "burrow", "accountId": "*" } }
   ]
 }
 ```

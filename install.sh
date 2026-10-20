@@ -6,10 +6,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/scripts/env-fallbacks.sh"
 # Override for testing the install path against a scratch directory.
 # BURROW_CHANNEL_* first; the SUITE_CHANNEL_* spelling still works (deprecated).
-# The extension dir keeps its startup-suite-channel name: OpenClaw config and
-# suite-cli locate the installed plugin by it.
+# The extension dir is named after the plugin id (burrow-channel-plugin), the
+# same directory `openclaw plugins install` derives from the id.
 burrow_env BURROW_CHANNEL_EXT_DIR
-EXT_DIR="${BURROW_ENV_VALUE:-$HOME/.openclaw/extensions/startup-suite-channel}"
+EXT_DIR="${BURROW_ENV_VALUE:-$HOME/.openclaw/extensions/burrow-channel-plugin}"
 burrow_env BURROW_CHANNEL_OC_CONFIG
 OC_CONFIG="${BURROW_ENV_VALUE:-$HOME/.openclaw/openclaw.json}"
 
@@ -159,9 +159,9 @@ try:
 except (FileNotFoundError, json.JSONDecodeError):
     cfg = {}
 
-# Ensure channels.startup-suite
+# Ensure channels.burrow
 cfg.setdefault("channels", {})
-cfg["channels"].setdefault("startup-suite", {
+cfg["channels"].setdefault("burrow", {
     "enabled": True,
     "dmPolicy": "allowlist",
     "allowFrom": ["*"]
@@ -169,8 +169,8 @@ cfg["channels"].setdefault("startup-suite", {
 
 # Multi-agent: add named account to accounts map
 if account_id:
-    cfg["channels"]["startup-suite"].setdefault("accounts", {})
-    cfg["channels"]["startup-suite"]["accounts"][account_id] = {
+    cfg["channels"]["burrow"].setdefault("accounts", {})
+    cfg["channels"]["burrow"]["accounts"][account_id] = {
         "url": url,
         "runtimeId": runtime_id,
         "token": token,
@@ -184,7 +184,7 @@ if account_id:
     bindings = cfg.setdefault("bindings", [])
     has_binding = any(
         b.get("type") == "route"
-        and b.get("match", {}).get("channel") == "startup-suite"
+        and b.get("match", {}).get("channel") == "burrow"
         and b.get("match", {}).get("accountId") == account_id
         for b in bindings
     )
@@ -193,30 +193,25 @@ if account_id:
             "type": "route",
             "agentId": agent_id,
             "match": {
-                "channel": "startup-suite",
+                "channel": "burrow",
                 "accountId": account_id
             }
         })
 
-# Ensure plugins.allow includes startup-suite-channel-plugin
+# Ensure plugins.allow includes burrow-channel-plugin
 cfg.setdefault("plugins", {})
 allow = cfg["plugins"].setdefault("allow", [])
-if "startup-suite-channel-plugin" not in allow:
-    allow.append("startup-suite-channel-plugin")
-# Remove old name if present
-if "startup-suite-channel" in allow:
-    allow.remove("startup-suite-channel")
+if "burrow-channel-plugin" not in allow:
+    allow.append("burrow-channel-plugin")
 
-# Ensure plugins.entries includes startup-suite-channel-plugin
+# Ensure plugins.entries includes burrow-channel-plugin
 entries = cfg["plugins"].setdefault("entries", {})
 if isinstance(entries, list):
     # Migrate from old list format to dict
     entries = {}
     cfg["plugins"]["entries"] = entries
-if "startup-suite-channel-plugin" not in entries:
-    entries["startup-suite-channel-plugin"] = {"enabled": True}
-# Remove old name if present
-entries.pop("startup-suite-channel", None)
+if "burrow-channel-plugin" not in entries:
+    entries["burrow-channel-plugin"] = {"enabled": True}
 
 with open(path, "w") as f:
     json.dump(cfg, f, indent=2)
@@ -227,7 +222,7 @@ PYEOF
 if [ -n "$ACCOUNT_ID" ]; then
   # Multi-agent: write account into openclaw.json
   configure_with_python
-  echo "  ✓ Added account '$ACCOUNT_ID' to openclaw.json (channels.startup-suite.accounts.$ACCOUNT_ID)"
+  echo "  ✓ Added account '$ACCOUNT_ID' to openclaw.json (channels.burrow.accounts.$ACCOUNT_ID)"
   echo "  ✓ Added route binding for '$ACCOUNT_ID' → agent '$AGENT_ID'"
 else
   # Single-agent: write config.json + register channel/plugin in openclaw.json

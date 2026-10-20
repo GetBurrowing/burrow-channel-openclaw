@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.9.0
+
+Straight rename of the identifiers OpenClaw config keys on. There is no alias and no dual-name support: this version recognises only the new names.
+
+| What | Before (v0.8.x) | v0.9.0 |
+|---|---|---|
+| Plugin id (`openclaw.plugin.json` `id`, `index.ts`) | `startup-suite-channel-plugin` | `burrow-channel-plugin` |
+| npm package name (`package.json`, `src/build-identity.ts` `PACKAGE_NAME`) | `startup-suite-channel-plugin` | `burrow-channel-plugin` |
+| Channel id (manifest `channels`, configSchema / channelConfigs key, `package.json` `openclaw.channel.id`) | `startup-suite` | `burrow` |
+| Config section | `channels.startup-suite` | `channels.burrow` |
+| Route bindings | `match.channel: startup-suite` | `match.channel: burrow` |
+| `plugins.allow` / `plugins.entries` | `startup-suite-channel-plugin` | `burrow-channel-plugin` |
+| Extension dir (install.sh, update.sh, uninstall.sh) | `~/.openclaw/extensions/startup-suite-channel` | `~/.openclaw/extensions/burrow-channel-plugin` |
+| Inbound `From` / `To` / `OriginatingTo`, outbound message id | `startup-suite:<id>` | `burrow:<id>` |
+| Log prefixes (including token-ref lines) | `startup-suite:` / `startup-suite(<account>)` | `burrow:` / `burrow(<account>)` |
+
+- **Sessions do not carry over.** Session keys extend OpenClaw's route key, which now reads `agent:<agentId>:burrow:group:<peer>` (was `agent:<agentId>:startup-suite:group:<peer>`). An existing OpenClaw session store keyed on the old channel id is not found under the new keys, so every space starts a fresh session.
+- **An existing install is not migrated.** install.sh writes only the new names and no longer removes the pre-v0.8 `startup-suite-channel` entries; uninstall.sh removes only the new names. A host registered with v0.8.x or earlier must clear the old entries itself (`openclaw config unset channels.startup-suite`, and `plugins.allow` / `plugins.entries` `startup-suite-channel-plugin`), remove `~/.openclaw/extensions/startup-suite-channel`, then re-run install.sh. burrow-cli manages its own OpenClaw roots and pins this release.
+- The extension dir is now named after the plugin id, the same directory `openclaw plugins install` derives from the id (it was `startup-suite-channel`, an older plugin id).
+- The `llm_output` usage hook matches the channel id exactly and the `:burrow:` segment of the session key, instead of a bare substring.
+- Unchanged: `client_info.product` `openclaw`, every tool name (`suite_*`), the `BURROW_*` / deprecated `SUITE_*` installer env vars, and the repository name.
+- Removed check: `scripts/check-old-config.mjs`, with its helpers `scripts/_old-config-probe.mjs` and `scripts/_installed-copy-loader.mjs` and its fixtures `scripts/fixtures/openclaw-v0.7.0.json` and `config-v0.7.0.json`. Its claim was that an untouched v0.7.0 `openclaw.json` still loads after update.sh; a straight rename makes that false by design, so the check could only pass by testing old-name support.
+- npm: the package is renamed, but the npm trusted publisher is configured per package name and `burrow-channel-plugin` has none yet, so this version is tagged and not published to npm. burrow-cli installs the plugin by git clone at a pinned commit, not from npm.
+
 ## v0.8.1
 
 - Product-name wording only; tool names, parameters and wire behaviour unchanged. Tool labels and descriptions, error messages, the task-session preamble, the context preamble and the dispatch fallback sender now say Burrow.

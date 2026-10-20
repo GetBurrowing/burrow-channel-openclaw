@@ -1,7 +1,7 @@
 export type TaskPhase = "planning" | "execution" | "review" | "deploying";
 
 // Session keys are always derived by extending the route key OpenClaw already
-// resolved (`agent:<agentId>:startup-suite:group:<peer>`). Replacing it wholesale
+// resolved (`agent:<agentId>:burrow:group:<peer>`). Replacing it wholesale
 // drops the `agent:<id>:` prefix that the SQLite session scope reads back to
 // decide which agent's store an entry belongs to.
 const TASK_MARKER = ":task:";

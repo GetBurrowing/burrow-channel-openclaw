@@ -15,7 +15,7 @@ export function isSpaceUuid(value: unknown): value is string {
 //
 // There is deliberately NO fallback that derives a space from the session key
 // string. Session keys extend OpenClaw's resolved route key
-// (`agent:<agentId>:startup-suite:group:<peer>`) and `<peer>` is the Burrow
+// (`agent:<agentId>:burrow:group:<peer>`) and `<peer>` is the Burrow
 // agent slug — the space id is simply not in the key. Positional indexing used
 // to return the slug ("higgins"), which is worse than returning nothing: it
 // either crashes the channel on a non-UUID or, when the peer happens to be a

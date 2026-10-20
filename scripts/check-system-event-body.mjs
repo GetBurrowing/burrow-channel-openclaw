@@ -54,7 +54,7 @@ const { setSuiteRuntime } = await import(distUrl("src", "runtime.js"));
 
 const SPACE = "5a7f9c31-2d64-4b08-9f12-7c3e8a1d0b55";
 const TASK_ID = "019fa618-ca92-78bb-b73a-c3cc04ba3973";
-const ROUTE_KEY = "agent:ryan-home-openclaw:startup-suite:group:higgins";
+const ROUTE_KEY = "agent:ryan-home-openclaw:burrow:group:higgins";
 
 let captured = null;
 let deliverCb = null;

@@ -12,7 +12,7 @@
 // name the code that was copied.
 //
 // Why a stamp at all: OpenClaw installs by COPYING src/*.ts into
-// ~/.openclaw/extensions/startup-suite-channel (install.sh / update.sh), and
+// ~/.openclaw/extensions/burrow-channel-plugin (install.sh / update.sh), and
 // npm ships a tarball; neither has a .git, so the plugin cannot ask git at
 // runtime. src/build-identity.ts reads this file once at module load and
 // sends the sha as client_info.build.

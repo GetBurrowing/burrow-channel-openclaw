@@ -54,7 +54,7 @@ const { handleSuiteInbound } = await import(distUrl("src", "inbound.js"));
 const { setSuiteRuntime } = await import(distUrl("src", "runtime.js"));
 
 const SPACE = "5a7f9c31-2d64-4b08-9f12-7c3e8a1d0b55";
-const ROUTE_KEY = "agent:ryan-home-openclaw:startup-suite:group:moore";
+const ROUTE_KEY = "agent:ryan-home-openclaw:burrow:group:moore";
 
 // The exact context the handler produced BEFORE this stage, measured against the
 // real compiled handler rather than assumed. Frozen here so that dropping any

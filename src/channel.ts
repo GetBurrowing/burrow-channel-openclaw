@@ -14,7 +14,7 @@ import {
 } from "./plugin-state.js";
 
 const Type: any = RawType;
-const CHANNEL_ID = "startup-suite";
+const CHANNEL_ID = "burrow";
 
 // ── Burrow tool helpers ──────────────────────────────────────────────
 
@@ -84,12 +84,12 @@ export const suitePlugin: ChannelPlugin = {
   },
 
   // Channel-era tools are registered here, but suppressed at plugin load when
-  // every configured startup-suite account has `useMcpTools: true` — i.e. the
+  // every configured burrow account has `useMcpTools: true` — i.e. the
   // operator has fully cut over to Burrow's `/mcp` endpoint for tool execution
   // (ADR 0034). Mixed or legacy configs keep the channel tools so existing
   // installs don't silently lose functionality during migration.
   agentTools: ({ cfg }: { cfg?: any }) => {
-    const accounts: Record<string, any> = cfg?.channels?.["startup-suite"]?.accounts ?? {};
+    const accounts: Record<string, any> = cfg?.channels?.["burrow"]?.accounts ?? {};
     const accountIds = Object.keys(accounts);
     const allAccountsUseMcpTools =
       accountIds.length > 0 && accountIds.every((id) => accounts[id]?.useMcpTools === true);
@@ -733,7 +733,7 @@ export const suitePlugin: ChannelPlugin = {
       const client = clientForSpace(spaceId);
       if (!client) throw new Error("Burrow client is not connected");
       client.sendReply(spaceId, text);
-      return { channel: CHANNEL_ID, messageId: `startup-suite:${Date.now()}` };
+      return { channel: CHANNEL_ID, messageId: `burrow:${Date.now()}` };
     },
   },
 
@@ -751,7 +751,7 @@ export const suitePlugin: ChannelPlugin = {
 
       if (!suiteConfig) {
         runtime.error(`burrow(${accountId}): missing configuration`);
-        throw new Error(`startup-suite: missing configuration for account ${accountId}`);
+        throw new Error(`burrow: missing configuration for account ${accountId}`);
       }
 
       const client = new SuiteClient(suiteConfig, {
@@ -780,7 +780,7 @@ export const suitePlugin: ChannelPlugin = {
         },
 
         onToolResult(payload) {
-          runtime.log(`startup-suite: tool result: ${payload.call_id}`);
+          runtime.log(`burrow: tool result: ${payload.call_id}`);
         },
 
         onDisconnect() {

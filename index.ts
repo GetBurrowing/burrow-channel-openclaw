@@ -71,7 +71,7 @@ function taskPhaseGuidance(
 }
 
 export default defineChannelPluginEntry({
-  id: "startup-suite-channel-plugin",
+  id: "burrow-channel-plugin",
   name: "Burrow Channel",
   description: "Connect OpenClaw to a Burrow deployment as a federated runtime",
   plugin: suitePlugin,
@@ -200,7 +200,10 @@ export default defineChannelPluginEntry({
     });
 
     api.on("llm_output", (event, ctx) => {
-      if (!ctx.channelId?.includes("startup-suite") && !ctx.sessionKey?.includes("startup-suite")) {
+      // Exact channel id, and the `:burrow:` segment of a route-derived session
+      // key (`agent:<id>:burrow:group:<peer>`): a bare "burrow" substring would
+      // also match another channel's agent whose id contains the word.
+      if (ctx.channelId !== "burrow" && !ctx.sessionKey?.includes(":burrow:")) {
         return;
       }
 

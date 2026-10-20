@@ -8,7 +8,7 @@
 // ── BUILD ───────────────────────────────────────────────────────────────────
 //
 // OpenClaw installs this plugin by COPYING files (install.sh / update.sh copy
-// src/*.ts into ~/.openclaw/extensions/startup-suite-channel) and npm ships a
+// src/*.ts into ~/.openclaw/extensions/burrow-channel-plugin) and npm ships a
 // tarball; neither carries a .git, so `git rev-parse` cannot work at runtime.
 // Instead scripts/write-build-info.mjs stamps `build-info.json`
 // (`{ sha, generated_at }`) next to the code at copy/build time, and this
@@ -34,7 +34,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-export const PACKAGE_NAME = "startup-suite-channel-plugin";
+export const PACKAGE_NAME = "burrow-channel-plugin";
 const SHA_PATTERN = /^[0-9a-f]{40}(-dirty)?$/;
 const MAX_BUILD_BYTES = 64;
 

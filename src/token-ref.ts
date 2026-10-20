@@ -186,7 +186,7 @@ export function resolveTokenRef(
     const key = `${account}\u0000${reason}`;
     if (!failureLogged.has(key)) {
       failureLogged.add(key);
-      log(`startup-suite(${account}): token ref unresolved: ${reason}`);
+      log(`burrow(${account}): token ref unresolved: ${reason}`);
     }
     return { ok: false, reason, kind };
   };
@@ -206,7 +206,7 @@ export function resolveTokenRef(
   if (!literalWarned.has(account)) {
     literalWarned.add(account);
     log(
-      `startup-suite(${account}): a literal runtime token in config is deprecated; ` +
+      `burrow(${account}): a literal runtime token in config is deprecated; ` +
         `use token "file:<absolute path>" (mode 0600) or "keychain:<item>" with tokenKeychainService`,
     );
   }
