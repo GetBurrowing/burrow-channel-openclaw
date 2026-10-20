@@ -18,7 +18,7 @@ function estimateCost(model: string, inputTokens: number, outputTokens: number):
   return (inputTokens / 1_000_000) * pricing.input + (outputTokens / 1_000_000) * pricing.output;
 }
 
-function resolveSpaceId(sessionKey?: string | null): string | undefined {
+export function resolveSpaceId(sessionKey?: string | null): string | undefined {
   const taskSession = parseTaskSessionKey(sessionKey);
   if (taskSession) {
     return getTaskWorkers().resolveExecutionSpaceId(sessionKey);
@@ -28,8 +28,45 @@ function resolveSpaceId(sessionKey?: string | null): string | undefined {
   return parts.length >= 5 ? parts[4] : parts.length >= 4 ? parts[3] : undefined;
 }
 
-function resolveTaskId(spaceId?: string | null, sessionKey?: string | null): string | undefined {
+export function resolveTaskId(spaceId?: string | null, sessionKey?: string | null): string | undefined {
   return getSpaceTaskId(spaceId) || parseTaskSessionKey(sessionKey)?.taskId;
+}
+
+export function buildUsageEventPayload(params: {
+  spaceId?: string | null;
+  sessionKey?: string | null;
+  model?: string;
+  provider?: string;
+  usage?: {
+    input?: number;
+    output?: number;
+    cacheRead?: number;
+    cacheWrite?: number;
+  };
+  sessionId?: string | null;
+  runId?: string | null;
+}) {
+  const usage = params.usage || {};
+  const inputTokens = usage.input || 0;
+  const outputTokens = usage.output || 0;
+
+  return {
+    space_id: params.spaceId,
+    task_id: resolveTaskId(params.spaceId, params.sessionKey) ?? null,
+    session_key: params.sessionKey,
+    model: params.model,
+    provider: params.provider,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    cache_read_tokens: usage.cacheRead || 0,
+    cache_write_tokens: usage.cacheWrite || 0,
+    cost_usd: estimateCost(params.model || "", inputTokens, outputTokens),
+    latency_ms: 0,
+    metadata: {
+      session_id: params.sessionId ?? null,
+      run_id: params.runId ?? null,
+    },
+  };
 }
 
 function taskPhaseGuidance(taskSession: ReturnType<typeof parseTaskSessionKey>): string | null {
@@ -187,7 +224,6 @@ export default defineChannelPluginEntry({
 
       const taskSession = parseTaskSessionKey(ctx.sessionKey);
       const spaceId = resolveSpaceId(ctx.sessionKey);
-      const taskId = resolveTaskId(spaceId, ctx.sessionKey);
       const client = clientForSpace(spaceId);
       if (!client) return;
 
@@ -200,28 +236,17 @@ export default defineChannelPluginEntry({
         });
       }
 
-      const usage = event.usage || {};
-      const inputTokens = usage.input || 0;
-      const outputTokens = usage.output || 0;
-      const costUsd = estimateCost(event.model || "", inputTokens, outputTokens);
-
-      client.sendUsageEvent({
-        space_id: spaceId,
-        task_id: taskId,
-        session_key: ctx.sessionKey,
-        model: event.model,
-        provider: event.provider,
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        cache_read_tokens: usage.cacheRead || 0,
-        cache_write_tokens: usage.cacheWrite || 0,
-        cost_usd: costUsd,
-        latency_ms: 0,
-        metadata: {
-          session_id: event.sessionId || ctx.sessionId,
-          run_id: event.runId,
-        },
-      });
+      client.sendUsageEvent(
+        buildUsageEventPayload({
+          spaceId,
+          sessionKey: ctx.sessionKey,
+          model: event.model,
+          provider: event.provider,
+          usage: event.usage,
+          sessionId: event.sessionId || ctx.sessionId,
+          runId: event.runId,
+        })
+      );
     });
 
     api.on("agent_end", (event, ctx) => {

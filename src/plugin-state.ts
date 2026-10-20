@@ -88,9 +88,23 @@ export function setSpaceTaskId(spaceId: string, taskId: string) {
   spaceToTaskId.set(spaceId, taskId);
 }
 
+export function clearSpaceTaskId(spaceId: string) {
+  spaceToTaskId.delete(spaceId);
+}
+
 export function getSpaceTaskId(spaceId?: string | null): string | undefined {
   if (!spaceId) return undefined;
   return spaceToTaskId.get(spaceId);
+}
+
+export function resetPluginStateForTests() {
+  clients.clear();
+  spaceToAccountId.clear();
+  spaceToTaskId.clear();
+  if (taskWorkers) {
+    taskWorkers.shutdown();
+    taskWorkers = null;
+  }
 }
 
 export function clientForSpace(spaceId?: string | null): SuiteClient | null {
