@@ -6,7 +6,7 @@ import { isSpaceUuid } from "./space-resolution.js";
 import type { AttentionPayload } from "./suite-client.js";
 import type { SuiteClient } from "./suite-client.js";
 
-const CHANNEL_ID = "startup-suite";
+const CHANNEL_ID = "burrow";
 
 // Reasons that represent an ongoing human conversation — these share one
 // session per space so the agent keeps its thread. Mirrors `@routable_reasons`
@@ -362,8 +362,8 @@ export async function handleSuiteInbound(params: {
     BodyForAgent: rawBody,
     RawBody: rawBody,
     CommandBody: rawBody,
-    From: `startup-suite:${senderId}`,
-    To: `startup-suite:${spaceId}`,
+    From: `burrow:${senderId}`,
+    To: `burrow:${spaceId}`,
     SessionKey: sessionKey,
     AccountId: route.accountId,
     ChatType: isGroup ? "group" : "direct",
@@ -375,7 +375,7 @@ export async function handleSuiteInbound(params: {
     MessageSid: payload.signal?.message_id || String(Date.now()),
     Timestamp: Date.now(),
     OriginatingChannel: CHANNEL_ID,
-    OriginatingTo: `startup-suite:${spaceId}`,
+    OriginatingTo: `burrow:${spaceId}`,
     CommandAuthorized: true,
     ...correlationCtx,
   });
@@ -427,11 +427,11 @@ export async function handleSuiteInbound(params: {
       updateLastRoute: {
         sessionKey: conversationSessionKey,
         channel: CHANNEL_ID,
-        to: `startup-suite:${spaceId}`,
+        to: `burrow:${spaceId}`,
         accountId,
       },
       onRecordError: (err: unknown) => {
-        runtime.error(`startup-suite: session meta error: ${String(err)}`);
+        runtime.error(`burrow: session meta error: ${String(err)}`);
       },
     });
 
@@ -465,7 +465,7 @@ export async function handleSuiteInbound(params: {
         },
         typingCallbacks: undefined,
         onError: (err: unknown, info: { kind: string }) => {
-          runtime.error(`startup-suite ${info.kind} reply failed: ${String(err)}`);
+          runtime.error(`burrow ${info.kind} reply failed: ${String(err)}`);
         },
         onCleanup: () => {
           if (!isOrchestrated) {

@@ -1,14 +1,14 @@
 {
-  "id": "startup-suite-channel-plugin",
+  "id": "burrow-channel-plugin",
   "kind": "channel",
-  "channels": ["startup-suite"],
+  "channels": ["burrow"],
   "name": "Burrow Channel",
   "description": "Connect to a Burrow deployment as a federated agent runtime",
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
     "properties": {
-      "startup-suite": {
+      "burrow": {
         "type": "object",
         "description": "Multi-account Burrow channel config",
         "properties": {
@@ -65,7 +65,7 @@
     }
   },
   "channelConfigs": {
-    "startup-suite": {
+    "burrow": {
       "label": "Burrow",
       "blurb": "Connect to a Burrow deployment as a federated agent runtime",
       "schema": {
@@ -126,7 +126,7 @@
     }
   },
   "uiHints": {
-    "channels.startup-suite.accounts": {
+    "channels.burrow.accounts": {
       "label": "Agent Accounts",
       "description": "One entry per federated agent. Key = accountId, value = connection config."
     }

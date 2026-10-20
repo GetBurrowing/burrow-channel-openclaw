@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Override for testing the install path against a scratch directory.
 # BURROW_CHANNEL_EXT_DIR first; SUITE_CHANNEL_EXT_DIR still works (deprecated).
 burrow_env BURROW_CHANNEL_EXT_DIR
-EXT_DIR="${BURROW_ENV_VALUE:-$HOME/.openclaw/extensions/startup-suite-channel}"
+EXT_DIR="${BURROW_ENV_VALUE:-$HOME/.openclaw/extensions/burrow-channel-plugin}"
 
 if [ ! -d "$EXT_DIR" ]; then
   echo "Error: Plugin not installed at $EXT_DIR"

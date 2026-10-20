@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
-EXT_DIR="$HOME/.openclaw/extensions/startup-suite-channel"
+EXT_DIR="$HOME/.openclaw/extensions/burrow-channel-plugin"
 
 # shellcheck source=env-fallbacks.sh
 . "$SCRIPT_DIR/env-fallbacks.sh"

@@ -42,7 +42,7 @@ Burrow (Phoenix WS) → SuiteClient.onAttention → handleSuiteInbound → OpenC
 
 - **`src/plugin-state.ts`** — Singleton state: client registry (accountId → SuiteClient), space→account mapping, legacy config.json fallback, and TaskWorkerController lifecycle.
 
-- **`src/session-key.ts`** — Builds and parses session keys in the format `startup-suite:task:<taskId>:<phase>[:attempt:<n>]`.
+- **`src/session-key.ts`** — Builds and parses session keys by extending OpenClaw's route key: `agent:<agentId>:burrow:group:<peer>:task:<taskId>:<phase>[:attempt:<n>]`.
 
 ### Tool Registration Pattern
 
@@ -55,11 +55,11 @@ Orchestrated tasks flow through phases: `planning → execution → review → d
 ### Configuration
 
 Single-agent: `config.json` at the plugin root (legacy path, loaded by plugin-state as fallback).
-Multi-agent: Named accounts under `channels.startup-suite.accounts` in OpenClaw's `openclaw.json`.
+Multi-agent: Named accounts under `channels.burrow.accounts` in OpenClaw's `openclaw.json`.
 
-### Names that stay `startup-suite` / `suite`
+### Identifiers OpenClaw config keys on
 
-The product is Burrow, but these identifiers are keyed on by OpenClaw config and suite-cli and must not be renamed without a config migration: channel id `startup-suite`, plugin and npm package id `startup-suite-channel-plugin`, extension dir `~/.openclaw/extensions/startup-suite-channel`, session key prefix `startup-suite:task:`, `client_info.product` `openclaw`, and every tool name (`suite_*`).
+Since v0.9.0: channel id `burrow`, plugin and npm package id `burrow-channel-plugin`, extension dir `~/.openclaw/extensions/burrow-channel-plugin` (the dir `openclaw plugins install` derives from the id). burrow-cli pins this repo and must use the same ids. There is no alias for the pre-0.9.0 names. Unchanged: `client_info.product` `openclaw` and every tool name (`suite_*`).
 
 ### Environment variables (installer scripts only)
 

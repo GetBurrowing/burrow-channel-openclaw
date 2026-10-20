@@ -16,7 +16,7 @@
 //
 // The old name is spelled with \u0053 escapes throughout this file so that the
 // guard does not match its own source. Lowercase identifiers (suite_* tool
-// names, the `startup-suite` channel id, file names) never match step 3.
+// names, the `burrow` channel id, file names) never match step 3.
 //
 // Files are enumerated by walking the tree, not with `git ls-files`, so an
 // untracked or generated file is checked too. Excluded: .git, node_modules,
@@ -31,10 +31,11 @@ const OLD = "\u0053uite";
 const EXCLUDED_DIRS = new Set([".git", "node_modules", "dist"]);
 const EXCLUDED_FILES = new Set(["package-lock.json"]);
 
-// Measured 2026-10-18 at ad30741: 59 files on a clean checkout (no
-// node_modules, dist or generated files). An empty or truncated walk must fail,
-// not pass, so the floor sits a small margin below that.
-const MIN_FILES_SCANNED = 55;
+// Measured 2026-10-20 for v0.9.0: 55 files on a clean checkout (no
+// node_modules, dist or generated files; v0.9.0 deleted the five old-config
+// check files, down from 60). An empty or truncated walk must fail, not pass,
+// so the floor sits a small margin below that.
+const MIN_FILES_SCANNED = 51;
 
 const STRIP = [new RegExp(`Startup-${OLD}`, "g"), /ghcr\.io\/startup-suite/gi];
 

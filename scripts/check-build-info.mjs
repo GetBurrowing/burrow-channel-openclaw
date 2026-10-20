@@ -1,7 +1,7 @@
 // Build-stamp contract test (task 01a09e63 stage 2).
 //
 // The installed plugin has no .git (install.sh / update.sh COPY src/*.ts into
-// ~/.openclaw/extensions/startup-suite-channel), so the commit it reports as
+// ~/.openclaw/extensions/burrow-channel-plugin), so the commit it reports as
 // client_info.build comes from build-info.json, stamped at copy/build time by
 // scripts/write-build-info.mjs. This checks:
 //   (1) write-build-info.mjs stamps `git rev-parse HEAD` of this checkout

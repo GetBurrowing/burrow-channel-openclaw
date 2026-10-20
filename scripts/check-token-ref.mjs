@@ -115,7 +115,7 @@ try {
     assert.match(r.reason, new RegExp(`${p}.*mode 0${mode.toString(8)}`), "reason names path and mode");
     const lines = captured.slice(before);
     assert.equal(lines.length, 1, "one failure = one log line");
-    assert.match(lines[0], /startup-suite\(a2\)/, "log line names the account");
+    assert.match(lines[0], /burrow\(a2\)/, "log line names the account");
     assert.ok(lines[0].includes(p), "log line names the path");
   }
   pass("file: 0644 / 0640 / 0700 refused with one line naming account, path and mode");
@@ -172,7 +172,7 @@ try {
   // The resolved value reaches the client config.
   const kcCfg = {
     channels: {
-      "startup-suite": {
+      "burrow": {
         accounts: {
           k1: { url: "ws://127.0.0.1:1/runtime/ws", runtimeId: "rt-k1", token: "keychain:RUNTIME_TOKEN.test", tokenKeychainService: "svc-01a0d8f8" },
         },
@@ -247,7 +247,7 @@ try {
   resolve(LITERAL_CANARY, { accountId: "l1" });
   let lit = captured.slice(before).filter((l) => l.includes("deprecated"));
   assert.equal(lit.length, 1, "the deprecation warning fires ONCE per account");
-  assert.match(lit[0], /startup-suite\(l1\)/);
+  assert.match(lit[0], /burrow\(l1\)/);
   resolve(LITERAL_CANARY, { accountId: "l2" });
   lit = captured.slice(before).filter((l) => l.includes("deprecated"));
   assert.equal(lit.length, 2, "a second account gets its own one warning");
@@ -258,7 +258,7 @@ try {
   const badFile = tokenFile("bad-644", 0o644);
   const cfg = {
     channels: {
-      "startup-suite": {
+      "burrow": {
         accounts: {
           good: { url: "ws://127.0.0.1:1/runtime/ws", runtimeId: "rt-good", token: `file:${good600}` },
           bad: { url: "ws://127.0.0.1:1/runtime/ws", runtimeId: "rt-bad", token: `file:${badFile}` },

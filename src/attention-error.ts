@@ -7,7 +7,7 @@ import type { AttentionPayload } from "./suite-client.js";
 // closure handed to `SuiteClient`, itself inside `gateway.startAccount` — used
 // to log exactly this:
 //
-//     runtime.error(`startup-suite: attention handler error: ${String(err)}`)
+//     runtime.error(`burrow: attention handler error: ${String(err)}`)
 //
 // `String(err)` on an Error yields `"TypeError: Cannot read properties of
 // undefined (reading 'author')"` and NOTHING ELSE: no stack, so no file and no

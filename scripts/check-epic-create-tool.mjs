@@ -34,7 +34,7 @@ const { setClient, clearClient } = await import(pathToFileURL(compiledPluginStat
 // ── 1. Legacy-mode (useMcpTools: false) exposes both names ───────────────
 const legacyCfg = {
   channels: {
-    "startup-suite": {
+    "burrow": {
       accounts: {
         default: { url: "ws://x", runtimeId: "r", token: "t", useMcpTools: false },
       },
@@ -58,7 +58,7 @@ assert.ok(
 // ── 2. All-accounts useMcpTools: true suppresses the entire list ─────────
 const mcpCfg = {
   channels: {
-    "startup-suite": {
+    "burrow": {
       accounts: {
         default: { url: "ws://x", runtimeId: "r", token: "t", useMcpTools: true },
         secondary: { url: "ws://y", runtimeId: "r2", token: "t2", useMcpTools: true },

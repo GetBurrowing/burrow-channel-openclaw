@@ -43,7 +43,7 @@ const { SuiteClient } = await import(distUrl("src", "suite-client.js"));
 
 const SPACE = "5a7f9c31-2d64-4b08-9f12-7c3e8a1d0b55";
 const MESSAGE_ID = "01a0d8de-aaaa-7001-9246-3f8fe86630f6";
-const ROUTE_KEY = "agent:ryan-home-openclaw:startup-suite:group:moore";
+const ROUTE_KEY = "agent:ryan-home-openclaw:burrow:group:moore";
 
 let deliverCb = null;
 let cleanupCb = null;

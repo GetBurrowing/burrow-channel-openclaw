@@ -1,8 +1,0 @@
-{
-  "url": "wss://core.example.test/runtime/ws",
-  "runtimeId": "rt-default-0700",
-  "token": "fixture-literal-token-default",
-  "autoJoinSpaces": [],
-  "reconnectIntervalMs": 5000,
-  "maxReconnectIntervalMs": 60000
-}

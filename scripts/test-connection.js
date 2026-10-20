@@ -26,7 +26,7 @@ if (accountId) {
   const ocPath = join(process.env.HOME || "~", ".openclaw/openclaw.json");
   try {
     const oc = JSON.parse(readFileSync(ocPath, "utf-8"));
-    const account = oc?.channels?.["startup-suite"]?.accounts?.[accountId];
+    const account = oc?.channels?.["burrow"]?.accounts?.[accountId];
     if (account) {
       config = account;
       configSource = `${ocPath} (account: ${accountId})`;
@@ -39,7 +39,7 @@ if (accountId) {
 // Single-agent: try config.json
 if (!config) {
   const configPaths = [
-    join(process.env.HOME || "~", ".openclaw/extensions/startup-suite-channel/config.json"),
+    join(process.env.HOME || "~", ".openclaw/extensions/burrow-channel-plugin/config.json"),
     join(__dirname, "..", "config.json"),
   ];
 

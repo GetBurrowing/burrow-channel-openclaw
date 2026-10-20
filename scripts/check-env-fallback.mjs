@@ -96,7 +96,7 @@ function assertInstalled(extDir, ocPath, label) {
   }
   if (ocPath) {
     const cfg = JSON.parse(readFileSync(ocPath, "utf8"));
-    assert.equal(cfg.channels["startup-suite"].accounts.beacon.runtimeId, "rt-env-check", `${label}: account not written to ${ocPath}`);
+    assert.equal(cfg.channels["burrow"].accounts.beacon.runtimeId, "rt-env-check", `${label}: account not written to ${ocPath}`);
   }
 }
 const isAbsentOrEmpty = (p) => !existsSync(p) || readdirSync(p).length === 0;
@@ -166,7 +166,7 @@ try {
     const { home } = freshCase("defaults");
     const ins = run("install.sh", installArgs, { home });
     assert.equal(ins.status, 0, `(d) install.sh failed: ${ins.stderr}`);
-    assertInstalled(path.join(home, ".openclaw", "extensions", "startup-suite-channel"), path.join(home, ".openclaw", "openclaw.json"), "(d) install");
+    assertInstalled(path.join(home, ".openclaw", "extensions", "burrow-channel-plugin"), path.join(home, ".openclaw", "openclaw.json"), "(d) install");
     assert.deepEqual(deprecationLines(ins.stderr), [], `(d) no warning: ${ins.stderr}`);
     results.push("(d) defaults unchanged");
   }
@@ -178,7 +178,7 @@ try {
     const account = (id) => ({ url: "ws://127.0.0.1:1/runtime/ws", runtimeId: `rt-${id}`, token: "unused" });
     writeFileSync(
       path.join(home, ".openclaw", "openclaw.json"),
-      JSON.stringify({ channels: { "startup-suite": { accounts: { old: account("old"), neu: account("neu"), arg: account("arg") } } } }),
+      JSON.stringify({ channels: { "burrow": { accounts: { old: account("old"), neu: account("neu"), arg: account("arg") } } } }),
     );
     const tc = (env, args = [], viaJs = false) => {
       const r = viaJs
